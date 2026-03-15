@@ -91,6 +91,7 @@ class WebToWP_Engine {
     private function init_components() {
         new W2WP_API_Config();
         new W2WP_ACF_Fields();
+        W2WP_Admin_Setup::get_instance();
     }
 
     private function __clone() {}
