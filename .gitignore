@@ -1,0 +1,46 @@
+# WordPress Core Files
+wp-config.php
+wp-config-local.php
+
+# Environment Files
+.env
+.env.local
+.env.production
+*.env
+
+# Tokens and Credentials
+*token*
+*secret*
+*key.php
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Dependency Directories
+node_modules/
+vendor/
+bower_components/
+
+# Build and Cache
+*.log
+*.cache
+.sass-cache/
+dist/
+build/
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Plugin Update Checker Library (download separately)
+includes/plugin-update-checker/*
+!includes/plugin-update-checker/README.md
+!includes/plugin-update-checker/.gitkeep
