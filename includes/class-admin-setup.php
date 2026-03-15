@@ -25,6 +25,10 @@ class W2WP_Admin_Setup {
             return;
         }
 
+        if ( ! function_exists( 'acf_add_options_sub_page' ) ) {
+            return;
+        }
+
         acf_add_options_page( array(
             'page_title'    => __( 'WebToWP', 'webtowp-engine' ),
             'menu_title'    => __( 'WebToWP', 'webtowp-engine' ),
