@@ -42,6 +42,11 @@ class W2WP_Setup {
         global $wpdb;
         $table_name = $wpdb->prefix . 'w2wp_deployment_logs';
         $charset_collate = $wpdb->get_charset_collate();
+        
+        // Asegurar que charset_collate no sea null
+        if ( ! is_string( $charset_collate ) ) {
+            $charset_collate = '';
+        }
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,

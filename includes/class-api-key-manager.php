@@ -47,6 +47,11 @@ class W2WP_API_Key_Manager {
         global $wpdb;
         $table_name = $wpdb->prefix . 'w2wp_api_keys';
         $charset_collate = $wpdb->get_charset_collate();
+        
+        // Asegurar que charset_collate no sea null
+        if ( ! is_string( $charset_collate ) ) {
+            $charset_collate = '';
+        }
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
             id bigint(20) NOT NULL AUTO_INCREMENT,
