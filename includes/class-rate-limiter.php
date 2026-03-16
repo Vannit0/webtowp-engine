@@ -40,7 +40,7 @@ class W2WP_Rate_Limiter {
     public function check_rate_limit( $result, $server, $request ) {
         // Solo aplicar a endpoints de WebToWP
         $route = $request->get_route();
-        if ( strpos( $route, '/webtowp/' ) === false ) {
+        if ( ! is_string( $route ) || strpos( $route, '/webtowp/' ) === false ) {
             return $result;
         }
 

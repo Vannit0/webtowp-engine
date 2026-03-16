@@ -52,7 +52,7 @@ class WebToWP_Engine {
             }
         }
 
-        if ( empty( $relative_class ) ) {
+        if ( empty( $relative_class ) || ! is_string( $relative_class ) ) {
             return;
         }
 

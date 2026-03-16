@@ -90,12 +90,17 @@ class W2WP_i18n {
         
         $files = glob( $languages_dir . '*.mo' );
         
-        foreach ( $files as $file ) {
-            $filename = basename( $file, '.mo' );
-            $locale = str_replace( $this->text_domain . '-', '', $filename );
-            
-            if ( $locale !== $filename ) {
-                $available[] = $locale;
+        if ( is_array( $files ) ) {
+            foreach ( $files as $file ) {
+                $filename = basename( $file, '.mo' );
+                if ( ! is_string( $filename ) || $filename === '' ) {
+                    continue;
+                }
+                $locale = str_replace( $this->text_domain . '-', '', $filename );
+                
+                if ( $locale !== $filename ) {
+                    $available[] = $locale;
+                }
             }
         }
         

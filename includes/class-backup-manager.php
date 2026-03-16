@@ -117,7 +117,7 @@ class W2WP_Backup_Manager {
         
         foreach ( $data['options'] as $option_name => $option_value ) {
             // Validar que sea una opción del plugin
-            if ( strpos( $option_name, 'w2wp_' ) !== 0 ) {
+            if ( ! is_string( $option_name ) || strpos( $option_name, 'w2wp_' ) !== 0 ) {
                 $skipped++;
                 continue;
             }

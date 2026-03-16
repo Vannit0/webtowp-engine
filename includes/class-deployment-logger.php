@@ -281,6 +281,10 @@ class W2WP_Deployment_Logger {
         $csv = "ID,Timestamp,Action,Status,Response Code,Message,User ID\n";
 
         foreach ( $logs as $log ) {
+            $message = isset( $log->response_message ) && is_string( $log->response_message ) 
+                ? str_replace( array( "\r", "\n", '"' ), array( '', '', '""' ), $log->response_message )
+                : '';
+            
             $csv .= sprintf(
                 "%d,%s,%s,%s,%d,%s,%d\n",
                 $log->id,
@@ -288,7 +292,7 @@ class W2WP_Deployment_Logger {
                 $log->action,
                 $log->status,
                 $log->response_code,
-                str_replace( array( "\r", "\n", '"' ), array( '', '', '""' ), $log->response_message ),
+                $message,
                 $log->user_id
             );
         }

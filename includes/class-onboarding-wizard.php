@@ -51,7 +51,7 @@ class W2WP_Onboarding_Wizard {
     public function check_onboarding_status() {
         // Solo en páginas del plugin
         $screen = get_current_screen();
-        if ( ! $screen || strpos( $screen->id, 'webtowp' ) === false ) {
+        if ( ! $screen || ! isset( $screen->id ) || ! is_string( $screen->id ) || strpos( $screen->id, 'webtowp' ) === false ) {
             return;
         }
 

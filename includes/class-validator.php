@@ -72,6 +72,11 @@ class W2WP_Validator {
         // Remover espacios
         $color = trim( $color );
         
+        // Asegurar que $color no sea null antes de usar strpos
+        if ( ! is_string( $color ) || $color === '' ) {
+            return '';
+        }
+        
         // Agregar # si no lo tiene
         if ( strpos( $color, '#' ) !== 0 ) {
             $color = '#' . $color;

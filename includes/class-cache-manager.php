@@ -187,7 +187,7 @@ class W2WP_Cache_Manager {
      */
     public function clear_settings_cache( $option, $old_value, $value ) {
         // Solo limpiar si es una opción del plugin
-        if ( strpos( $option, 'w2wp_' ) === 0 ) {
+        if ( is_string( $option ) && strpos( $option, 'w2wp_' ) === 0 ) {
             $this->clear_group( 'settings' );
             $this->clear_group( 'api' );
             error_log( "[WebToWP Cache] Settings cache cleared for option {$option}" );

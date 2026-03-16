@@ -21,6 +21,7 @@ class W2WP_Setup {
         self::set_default_branding();
         self::create_deployment_log_table();
         self::create_security_tables();
+        self::upgrade_database();
         
         // Marcar que el plugin se activó correctamente
         update_option( 'w2wp_activation_timestamp', current_time( 'timestamp' ) );
@@ -122,5 +123,38 @@ class W2WP_Setup {
         W2WP_Security_Logger::create_table();
         
         error_log( '[WebToWP Engine] Tablas de seguridad creadas/verificadas.' );
+    }
+
+    public static function upgrade_database() {
+        global $wpdb;
+        
+        $current_db_version = get_option( 'w2wp_db_version', '1.0.0' );
+        
+        // Verificar y actualizar tabla de deployment logs si es necesario
+        $table_name = $wpdb->prefix . 'w2wp_deployment_logs';
+        
+        // Verificar si la columna status existe
+        $column_exists = $wpdb->get_results( 
+            $wpdb->prepare( 
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'status'",
+                DB_NAME,
+                $table_name
+            )
+        );
+        
+        if ( empty( $column_exists ) ) {
+            // Agregar columna status si no existe
+            $wpdb->query( 
+                "ALTER TABLE {$table_name} 
+                ADD COLUMN status varchar(20) DEFAULT 'success' NOT NULL AFTER action,
+                ADD KEY status (status)"
+            );
+            error_log( '[WebToWP Engine] Columna status agregada a la tabla de deployment logs.' );
+        }
+        
+        // Actualizar versión de la base de datos
+        update_option( 'w2wp_db_version', W2WP_VERSION );
+        error_log( '[WebToWP Engine] Base de datos actualizada a versión ' . W2WP_VERSION );
     }
 }
