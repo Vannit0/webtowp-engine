@@ -77,10 +77,20 @@ class WebToWP_Engine {
     }
 
     public function load_plugin_textdomain() {
+        $basename = defined( 'W2WP_BASENAME' ) ? W2WP_BASENAME : '';
+        if ( empty( $basename ) ) {
+            return;
+        }
+        
+        $lang_dir = dirname( $basename );
+        if ( ! is_string( $lang_dir ) ) {
+            return;
+        }
+        
         load_plugin_textdomain(
             'webtowp-engine',
             false,
-            dirname( W2WP_BASENAME ) . '/languages/'
+            $lang_dir . '/languages/'
         );
     }
 

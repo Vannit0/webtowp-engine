@@ -35,18 +35,31 @@ class W2WP_i18n {
     public function load_plugin_textdomain() {
         $locale = apply_filters( 'plugin_locale', get_locale(), $this->text_domain );
         
+        // Validar que locale no sea null
+        if ( ! is_string( $locale ) || empty( $locale ) ) {
+            $locale = 'en_US';
+        }
+        
         // Cargar traducciones desde el directorio de idiomas de WordPress
-        load_textdomain(
-            $this->text_domain,
-            WP_LANG_DIR . '/plugins/' . $this->text_domain . '-' . $locale . '.mo'
-        );
+        if ( defined( 'WP_LANG_DIR' ) && is_string( WP_LANG_DIR ) ) {
+            $mo_file = WP_LANG_DIR . '/plugins/' . $this->text_domain . '-' . $locale . '.mo';
+            if ( file_exists( $mo_file ) ) {
+                load_textdomain( $this->text_domain, $mo_file );
+            }
+        }
         
         // Cargar traducciones desde el directorio del plugin
-        load_plugin_textdomain(
-            $this->text_domain,
-            false,
-            dirname( W2WP_BASENAME ) . '/languages/'
-        );
+        $basename = defined( 'W2WP_BASENAME' ) ? W2WP_BASENAME : '';
+        if ( ! empty( $basename ) && is_string( $basename ) ) {
+            $lang_dir = dirname( $basename );
+            if ( is_string( $lang_dir ) ) {
+                load_plugin_textdomain(
+                    $this->text_domain,
+                    false,
+                    $lang_dir . '/languages/'
+                );
+            }
+        }
         
         error_log( "[WebToWP i18n] Traducciones cargadas para locale: {$locale}" );
     }
