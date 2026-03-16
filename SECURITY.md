@@ -1,6 +1,37 @@
 # Seguridad - WebToWP Engine
 
-## 🔐 Configuración del Token de GitHub
+## � Características de Seguridad v1.4.0
+
+### Gestión Avanzada de API Keys
+- ✅ Múltiples API keys con permisos granulares
+- ✅ Hash SHA-256 para almacenamiento seguro
+- ✅ Expiración automática configurable
+- ✅ Rate limiting por key
+- ✅ Tracking de uso y última IP
+
+### Rate Limiting y Protección DDoS
+- ✅ Límites configurables por API key
+- ✅ Límites por IP para requests no autenticados
+- ✅ Lista negra de IPs (manual y automática)
+- ✅ Detección de patrones sospechosos
+- ✅ Auto-bloqueo por intentos fallidos
+
+### Encriptación de Datos
+- ✅ AES-256-CBC para datos sensibles
+- ✅ IV aleatorio por encriptación
+- ✅ Métodos helper para opciones y meta
+- ✅ Verificación de integridad
+
+### Auditoría de Seguridad
+- ✅ Logs completos de eventos
+- ✅ 4 niveles de severidad
+- ✅ Alertas por email (eventos críticos)
+- ✅ Estadísticas y análisis
+- ✅ Exportación a CSV
+
+---
+
+## �🔐 Configuración del Token de GitHub
 
 ### ⚠️ IMPORTANTE: NUNCA pongas el token en el código del plugin
 

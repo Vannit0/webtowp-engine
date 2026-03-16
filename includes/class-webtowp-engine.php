@@ -106,6 +106,10 @@ class WebToWP_Engine {
         W2WP_Dashboard::get_instance();
         W2WP_Notification_System::get_instance();
         W2WP_Onboarding_Wizard::get_instance();
+        W2WP_Security_Logger::get_instance();
+        W2WP_API_Key_Manager::get_instance();
+        W2WP_Rate_Limiter::get_instance();
+        W2WP_Encryption::get_instance();
         new W2WP_API_Config();
         new W2WP_ACF_Fields();
         W2WP_Admin_Setup::get_instance();

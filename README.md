@@ -1,11 +1,11 @@
 # WebToWP Engine 🚀
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Vannit0/webtowp-engine/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/Vannit0/webtowp-engine/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-GPL--2.0%2B-green.svg)](LICENSE)
 
-Motor headless profesional para WordPress. Transforma tu WordPress en un CMS headless potente con API REST completa, gestión de módulos, sistema de caché, deployment automático y una experiencia de administración moderna.
+Motor headless profesional para WordPress. Transforma tu WordPress en un CMS headless potente con API REST completa, gestión de módulos, sistema de caché, deployment automático, seguridad avanzada y una experiencia de administración moderna.
 
 ---
 
@@ -18,11 +18,14 @@ Motor headless profesional para WordPress. Transforma tu WordPress en un CMS hea
 - ✅ **Sistema de Caché** - Transients con gestión inteligente
 - ✅ **Deployment Automático** - Integración con Cloudflare Pages
 
-### 🔒 Seguridad
+### 🔒 Seguridad (NEW v1.4.0)
+- ✅ **Gestión de API Keys** - Múltiples keys con permisos granulares
+- ✅ **Rate Limiting** - Protección contra DDoS y abuso de API
+- ✅ **Encriptación AES-256** - Protección de datos sensibles
+- ✅ **Auditoría Completa** - Logs de seguridad con 4 niveles de severidad
+- ✅ **Lista Negra de IPs** - Bloqueo manual y automático
 - ✅ **Validación Completa** - 15+ métodos de validación
 - ✅ **Sanitización** - Todos los inputs sanitizados
-- ✅ **API Key** - Autenticación segura para API REST
-- ✅ **Verificación de Dependencias** - Checks automáticos
 
 ### 📊 Gestión
 - ✅ **Dashboard Inteligente** - Métricas y salud del sistema en tiempo real

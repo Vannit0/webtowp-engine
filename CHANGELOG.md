@@ -5,6 +5,168 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.4.0] - 2024-02-01
+
+### 🔒 Release de Seguridad - Gestión Avanzada de API Keys, Rate Limiting y Encriptación
+
+Esta versión añade características avanzadas de seguridad con más de **2,350 líneas de código nuevo**, **4 archivos creados** y mejoras masivas en protección, auditoría y gestión de acceso a la API.
+
+---
+
+## 🔐 FASE 4: SEGURIDAD
+
+### Añadido
+
+#### Sistema de Gestión Avanzada de API Keys
+- **Archivo:** `includes/class-api-key-manager.php` (550+ líneas)
+- Múltiples API keys por instalación
+- Generación segura con prefijo `w2wp_` + 64 caracteres aleatorios
+- Almacenamiento con hash SHA-256 (no reversible)
+- Permisos granulares (7 tipos):
+  - `read` - Lectura (GET)
+  - `write` - Escritura (POST, PUT, PATCH)
+  - `delete` - Eliminación (DELETE)
+  - `deploy` - Trigger de deployment
+  - `cache` - Gestión de caché
+  - `settings` - Modificar configuración
+  - `*` - Todos los permisos
+- Rate limit configurable por key (1-1000 req/min)
+- Expiración opcional (en días)
+- Tracking completo de uso:
+  - Contador de requests
+  - Última IP utilizada
+  - Timestamp de último uso
+- Activación/desactivación manual
+- Desactivación automática de keys expiradas (cron diario)
+- Estadísticas de uso por key
+- Tabla de BD: `wp_w2wp_api_keys`
+
+#### Sistema de Rate Limiting y Throttling
+- **Archivo:** `includes/class-rate-limiter.php` (400+ líneas)
+- Protección contra ataques DDoS
+- Rate limiting basado en ventanas deslizantes
+- Límites por API key (configurable)
+- Límites por IP para requests no autenticados (20/min)
+- Headers HTTP estándar:
+  - `X-RateLimit-Limit` - Límite total
+  - `X-RateLimit-Remaining` - Requests restantes
+  - `X-RateLimit-Reset` - Timestamp de reset
+  - `Retry-After` - Segundos hasta poder reintentar
+- Error 429 (Too Many Requests) cuando se excede
+- Lista negra de IPs (blacklist):
+  - Bloqueo manual con razón
+  - Auto-bloqueo por intentos fallidos
+  - Desbloqueo manual
+- Detección de IPs sospechosas
+- Integración con REST API (`rest_pre_dispatch` hook)
+- Almacenamiento en transients para máxima performance
+
+#### Sistema de Encriptación
+- **Archivo:** `includes/class-encryption.php` (400+ líneas)
+- Encriptación AES-256-CBC con OpenSSL
+- IV (Initialization Vector) aleatorio por cada encriptación
+- Generación automática de clave basada en WordPress salts
+- Métodos principales:
+  - `encrypt()` / `decrypt()` - Strings
+  - `encrypt_object()` / `decrypt_object()` - Arrays/objetos
+  - `hash()` / `verify_hash()` - Hash one-way SHA-256
+  - `generate_token()` - Tokens seguros aleatorios
+- Helpers para WordPress:
+  - `update_encrypted_option()` / `get_encrypted_option()`
+  - `update_encrypted_post_meta()` / `get_encrypted_post_meta()`
+  - `update_encrypted_user_meta()` / `get_encrypted_user_meta()`
+- Regeneración de clave (con advertencia de invalidación)
+- Migración de datos existentes a formato encriptado
+- Verificación de integridad de datos
+- Detección automática de OpenSSL
+
+#### Sistema de Auditoría de Seguridad
+- **Archivo:** `includes/class-security-logger.php` (500+ líneas)
+- Registro completo de eventos de seguridad
+- Tabla de BD: `wp_w2wp_security_logs`
+- 4 niveles de severidad:
+  - `low` - Eventos normales
+  - `medium` - Eventos que requieren atención
+  - `high` - Eventos sospechosos
+  - `critical` - Eventos críticos (alerta por email)
+- Campos registrados:
+  - Acción ejecutada
+  - Severidad
+  - User ID (si aplica)
+  - API Key ID (si aplica)
+  - Dirección IP
+  - User Agent
+  - Endpoint de API
+  - Metadata (JSON extensible)
+  - Timestamp
+- Estadísticas completas (30 días):
+  - Total de eventos
+  - Por severidad
+  - Por acción (top 10)
+  - IPs únicas
+  - Intentos fallidos
+  - Requests bloqueados
+  - Actividad sospechosa
+- Detección de IPs sospechosas (configurable)
+- Exportación a CSV
+- Limpieza automática de logs antiguos (90 días)
+- Alertas por email para eventos críticos
+- Métodos helper para eventos comunes:
+  - `log_api_request()`
+  - `log_auth_failed()`
+  - `log_invalid_api_key()`
+  - `log_permission_denied()`
+  - `log_suspicious_activity()`
+  - `log_sql_injection_attempt()`
+  - `log_xss_attempt()`
+
+#### Página de Administración de Seguridad
+- **Ubicación:** WebToWP → Seguridad
+- **Archivo:** Método `render_security_page()` en `class-admin-setup.php` (480+ líneas)
+- 4 tabs con funcionalidad completa:
+
+**Tab 1: API Keys**
+- Estadísticas: Total, Activas, Requests, Intentos Fallidos
+- Formulario de generación con:
+  - Nombre descriptivo
+  - Selección de permisos (checkboxes)
+  - Rate limit personalizado
+  - Expiración opcional
+- Tabla de keys existentes:
+  - Nombre, prefijo, permisos, rate limit
+  - Contador de uso
+  - Último uso (fecha + IP)
+  - Fecha de expiración
+  - Estado (activa/inactiva)
+  - Acciones (desactivar, eliminar)
+- Mostrar key completa solo al generarla (una vez)
+
+**Tab 2: Rate Limiting**
+- Estadísticas: Bloqueados, Lista Negra, IPs Sospechosas
+- Formulario para bloquear IP manualmente
+- Tabla de IPs sospechosas con contador de eventos
+- Tabla de lista negra con opción de desbloqueo
+
+**Tab 3: Logs de Seguridad**
+- Estadísticas: Total, Alta, Crítica, IPs Únicas
+- Tabla de eventos recientes (últimos 50)
+- Badges de color por severidad
+- Filtrado por fecha, acción, severidad
+
+**Tab 4: Encriptación**
+- Estado de OpenSSL
+- Información sobre AES-256-CBC
+- Regeneración de clave con doble confirmación
+- Advertencias sobre invalidación de datos
+
+### Mejorado
+- Integración de componentes de seguridad en el engine principal
+- Creación automática de tablas en activación del plugin
+- Verificación de OpenSSL en tiempo de ejecución
+- Mejor manejo de errores de seguridad
+
+---
+
 ## [1.3.0] - 2024-01-15
 
 ### 🎉 Release Mayor - Mejoras de Estabilidad, Funcionalidad y UX/UI

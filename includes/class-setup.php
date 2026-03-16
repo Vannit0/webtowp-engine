@@ -20,6 +20,7 @@ class W2WP_Setup {
         self::create_initial_pages();
         self::set_default_branding();
         self::create_deployment_log_table();
+        self::create_security_tables();
         
         // Marcar que el plugin se activó correctamente
         update_option( 'w2wp_activation_timestamp', current_time( 'timestamp' ) );
@@ -109,5 +110,17 @@ class W2WP_Setup {
         }
 
         error_log( '[WebToWP Engine] Proceso de creación de páginas completado.' );
+    }
+
+    public static function create_security_tables() {
+        // Crear tabla de API keys
+        require_once W2WP_INCLUDES_PATH . 'class-api-key-manager.php';
+        W2WP_API_Key_Manager::create_table();
+        
+        // Crear tabla de logs de seguridad
+        require_once W2WP_INCLUDES_PATH . 'class-security-logger.php';
+        W2WP_Security_Logger::create_table();
+        
+        error_log( '[WebToWP Engine] Tablas de seguridad creadas/verificadas.' );
     }
 }

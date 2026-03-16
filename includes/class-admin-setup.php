@@ -91,6 +91,15 @@ class W2WP_Admin_Setup {
             'webtowp-backup',
             array( $this, 'render_backup_page' )
         );
+
+        add_submenu_page(
+            'webtowp-engine',
+            __( 'Seguridad', 'webtowp-engine' ),
+            __( 'Seguridad', 'webtowp-engine' ),
+            'manage_options',
+            'webtowp-security',
+            array( $this, 'render_security_page' )
+        );
         
         error_log( 'W2WP_Admin_Setup: Menús nativos registrados' );
     }
@@ -1799,6 +1808,484 @@ class W2WP_Admin_Setup {
                     <li><?php _e( 'Se recomienda hacer backups manuales antes de cambios importantes.', 'webtowp-engine' ); ?></li>
                 </ul>
             </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Renderizar página de Seguridad
+     */
+    public function render_security_page() {
+        $key_manager = W2WP_API_Key_Manager::get_instance();
+        $rate_limiter = W2WP_Rate_Limiter::get_instance();
+        $security_logger = W2WP_Security_Logger::get_instance();
+        $encryption = W2WP_Encryption::get_instance();
+
+        // Procesar acciones
+        if ( isset( $_POST['w2wp_security_action'] ) && check_admin_referer( 'w2wp_security_action' ) ) {
+            $action = sanitize_text_field( $_POST['w2wp_security_action'] );
+
+            switch ( $action ) {
+                case 'generate_key':
+                    $result = $key_manager->generate_key( array(
+                        'name'        => sanitize_text_field( $_POST['key_name'] ),
+                        'permissions' => isset( $_POST['permissions'] ) ? array_map( 'sanitize_text_field', $_POST['permissions'] ) : array( 'read' ),
+                        'rate_limit'  => intval( $_POST['rate_limit'] ),
+                        'expires_in'  => ! empty( $_POST['expires_in'] ) ? intval( $_POST['expires_in'] ) : null,
+                    ) );
+
+                    if ( ! is_wp_error( $result ) ) {
+                        echo '<div class="notice notice-success"><p><strong>' . __( 'API Key generada exitosamente:', 'webtowp-engine' ) . '</strong><br><code style="font-size: 14px; background: #f0f0f0; padding: 5px 10px; display: inline-block; margin-top: 5px;">' . esc_html( $result['key'] ) . '</code><br><small>' . __( 'Guarda esta clave en un lugar seguro. No podrás verla nuevamente.', 'webtowp-engine' ) . '</small></p></div>';
+                    } else {
+                        echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
+                    }
+                    break;
+
+                case 'deactivate_key':
+                    $key_id = intval( $_POST['key_id'] );
+                    if ( $key_manager->deactivate_key( $key_id, 'manual' ) ) {
+                        echo '<div class="notice notice-success"><p>' . __( 'API Key desactivada exitosamente.', 'webtowp-engine' ) . '</p></div>';
+                    }
+                    break;
+
+                case 'delete_key':
+                    $key_id = intval( $_POST['key_id'] );
+                    if ( $key_manager->delete_key( $key_id ) ) {
+                        echo '<div class="notice notice-success"><p>' . __( 'API Key eliminada exitosamente.', 'webtowp-engine' ) . '</p></div>';
+                    }
+                    break;
+
+                case 'blacklist_ip':
+                    $ip = sanitize_text_field( $_POST['ip_address'] );
+                    $reason = sanitize_text_field( $_POST['reason'] );
+                    if ( $rate_limiter->blacklist_ip( $ip, $reason ) ) {
+                        echo '<div class="notice notice-success"><p>' . __( 'IP añadida a la lista negra.', 'webtowp-engine' ) . '</p></div>';
+                    }
+                    break;
+
+                case 'unblacklist_ip':
+                    $ip = sanitize_text_field( $_POST['ip_address'] );
+                    if ( $rate_limiter->unblacklist_ip( $ip ) ) {
+                        echo '<div class="notice notice-success"><p>' . __( 'IP removida de la lista negra.', 'webtowp-engine' ) . '</p></div>';
+                    }
+                    break;
+
+                case 'regenerate_encryption_key':
+                    if ( isset( $_POST['confirm_regenerate'] ) ) {
+                        $encryption->regenerate_key();
+                        echo '<div class="notice notice-warning"><p>' . __( 'Clave de encriptación regenerada. ADVERTENCIA: Los datos encriptados anteriormente ya no podrán ser desencriptados.', 'webtowp-engine' ) . '</p></div>';
+                    }
+                    break;
+            }
+        }
+
+        // Obtener datos
+        $api_keys = $key_manager->get_keys();
+        $blacklist = $rate_limiter->get_blacklist();
+        $security_stats = $security_logger->get_stats( 30 );
+        $suspicious_ips = $security_logger->get_suspicious_ips( 7, 5 );
+        $available_permissions = $key_manager->get_available_permissions();
+
+        ?>
+        <div class="wrap">
+            <h1>🔒 <?php _e( 'Seguridad', 'webtowp-engine' ); ?></h1>
+            <p><?php _e( 'Gestiona la seguridad de tu API, API keys, rate limiting y auditoría de eventos.', 'webtowp-engine' ); ?></p>
+
+            <!-- Tabs -->
+            <h2 class="nav-tab-wrapper">
+                <a href="#api-keys" class="nav-tab nav-tab-active"><?php _e( 'API Keys', 'webtowp-engine' ); ?></a>
+                <a href="#rate-limiting" class="nav-tab"><?php _e( 'Rate Limiting', 'webtowp-engine' ); ?></a>
+                <a href="#security-logs" class="nav-tab"><?php _e( 'Logs de Seguridad', 'webtowp-engine' ); ?></a>
+                <a href="#encryption" class="nav-tab"><?php _e( 'Encriptación', 'webtowp-engine' ); ?></a>
+            </h2>
+
+            <!-- Tab: API Keys -->
+            <div id="api-keys" class="tab-content">
+                <!-- Estadísticas -->
+                <div class="webtowp-grid webtowp-grid-4" style="margin: 20px 0;">
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">🔑</div>
+                        <div class="stat-value"><?php echo count( $api_keys ); ?></div>
+                        <div class="stat-label"><?php _e( 'API Keys Totales', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value"><?php echo count( array_filter( $api_keys, function( $k ) { return $k['is_active']; } ) ); ?></div>
+                        <div class="stat-label"><?php _e( 'Keys Activas', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value"><?php echo number_format( array_sum( array_column( $api_keys, 'usage_count' ) ) ); ?></div>
+                        <div class="stat-label"><?php _e( 'Requests Totales', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value"><?php echo $security_stats['failed_attempts']; ?></div>
+                        <div class="stat-label"><?php _e( 'Intentos Fallidos (30d)', 'webtowp-engine' ); ?></div>
+                    </div>
+                </div>
+
+                <!-- Generar Nueva Key -->
+                <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                    <h2 style="margin-top: 0;">➕ <?php _e( 'Generar Nueva API Key', 'webtowp-engine' ); ?></h2>
+                    <form method="post">
+                        <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                        <input type="hidden" name="w2wp_security_action" value="generate_key">
+                        
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="key_name"><?php _e( 'Nombre', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <input type="text" id="key_name" name="key_name" class="regular-text" required>
+                                    <p class="description"><?php _e( 'Nombre descriptivo para identificar esta key.', 'webtowp-engine' ); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label><?php _e( 'Permisos', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <?php foreach ( $available_permissions as $perm => $label ) : ?>
+                                        <label style="display: block; margin: 5px 0;">
+                                            <input type="checkbox" name="permissions[]" value="<?php echo esc_attr( $perm ); ?>" <?php checked( $perm, 'read' ); ?>>
+                                            <?php echo esc_html( $label ); ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="rate_limit"><?php _e( 'Rate Limit', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <input type="number" id="rate_limit" name="rate_limit" value="60" min="1" max="1000" style="width: 100px;">
+                                    <span><?php _e( 'requests por minuto', 'webtowp-engine' ); ?></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="expires_in"><?php _e( 'Expiración', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <input type="number" id="expires_in" name="expires_in" placeholder="<?php esc_attr_e( 'Sin expiración', 'webtowp-engine' ); ?>" min="1" style="width: 100px;">
+                                    <span><?php _e( 'días (dejar vacío para sin expiración)', 'webtowp-engine' ); ?></span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <p class="submit">
+                            <button type="submit" class="button button-primary"><?php _e( 'Generar API Key', 'webtowp-engine' ); ?></button>
+                        </p>
+                    </form>
+                </div>
+
+                <!-- Lista de Keys -->
+                <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                    <h2 style="margin-top: 0;">📋 <?php _e( 'API Keys Existentes', 'webtowp-engine' ); ?></h2>
+                    
+                    <?php if ( ! empty( $api_keys ) ) : ?>
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead>
+                                <tr>
+                                    <th><?php _e( 'Nombre', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Prefijo', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Permisos', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Rate Limit', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Uso', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Último Uso', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Expira', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Estado', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Acciones', 'webtowp-engine' ); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ( $api_keys as $key ) : ?>
+                                    <tr>
+                                        <td><strong><?php echo esc_html( $key['name'] ); ?></strong></td>
+                                        <td><code><?php echo esc_html( $key['key_prefix'] ); ?>...</code></td>
+                                        <td><?php echo esc_html( implode( ', ', $key['permissions'] ) ); ?></td>
+                                        <td><?php echo esc_html( $key['rate_limit'] ); ?>/min</td>
+                                        <td><?php echo number_format( $key['usage_count'] ); ?></td>
+                                        <td><?php echo $key['last_used_at'] ? esc_html( date_i18n( 'Y-m-d H:i', strtotime( $key['last_used_at'] ) ) ) : '-'; ?></td>
+                                        <td><?php echo $key['expires_at'] ? esc_html( date_i18n( 'Y-m-d', strtotime( $key['expires_at'] ) ) ) : __( 'Nunca', 'webtowp-engine' ); ?></td>
+                                        <td>
+                                            <?php if ( $key['is_active'] ) : ?>
+                                                <span class="webtowp-badge webtowp-badge-success"><?php _e( 'Activa', 'webtowp-engine' ); ?></span>
+                                            <?php else : ?>
+                                                <span class="webtowp-badge webtowp-badge-error"><?php _e( 'Inactiva', 'webtowp-engine' ); ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ( $key['is_active'] ) : ?>
+                                                <form method="post" style="display: inline;">
+                                                    <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                                                    <input type="hidden" name="w2wp_security_action" value="deactivate_key">
+                                                    <input type="hidden" name="key_id" value="<?php echo esc_attr( $key['id'] ); ?>">
+                                                    <button type="submit" class="button button-small"><?php _e( 'Desactivar', 'webtowp-engine' ); ?></button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                                                <input type="hidden" name="w2wp_security_action" value="delete_key">
+                                                <input type="hidden" name="key_id" value="<?php echo esc_attr( $key['id'] ); ?>">
+                                                <button type="submit" class="button button-small button-link-delete" onclick="return confirm('<?php esc_attr_e( '¿Eliminar esta API key?', 'webtowp-engine' ); ?>');"><?php _e( 'Eliminar', 'webtowp-engine' ); ?></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else : ?>
+                        <p style="text-align: center; padding: 40px; color: #666;">
+                            <?php _e( 'No hay API keys creadas. Genera una nueva arriba.', 'webtowp-engine' ); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Tab: Rate Limiting -->
+            <div id="rate-limiting" class="tab-content" style="display: none;">
+                <!-- Estadísticas -->
+                <div class="webtowp-grid webtowp-grid-3" style="margin: 20px 0;">
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">🚫</div>
+                        <div class="stat-value"><?php echo $security_stats['blocked_requests']; ?></div>
+                        <div class="stat-label"><?php _e( 'Requests Bloqueados (30d)', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">🌐</div>
+                        <div class="stat-value"><?php echo count( $blacklist ); ?></div>
+                        <div class="stat-label"><?php _e( 'IPs en Lista Negra', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value"><?php echo count( $suspicious_ips ); ?></div>
+                        <div class="stat-label"><?php _e( 'IPs Sospechosas', 'webtowp-engine' ); ?></div>
+                    </div>
+                </div>
+
+                <!-- Añadir IP a Lista Negra -->
+                <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                    <h2 style="margin-top: 0;">🚫 <?php _e( 'Añadir IP a Lista Negra', 'webtowp-engine' ); ?></h2>
+                    <form method="post">
+                        <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                        <input type="hidden" name="w2wp_security_action" value="blacklist_ip">
+                        
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="ip_address"><?php _e( 'Dirección IP', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <input type="text" id="ip_address" name="ip_address" class="regular-text" required pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
+                                    <p class="description"><?php _e( 'Ejemplo: 192.168.1.1', 'webtowp-engine' ); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="reason"><?php _e( 'Razón', 'webtowp-engine' ); ?></label></th>
+                                <td>
+                                    <input type="text" id="reason" name="reason" class="regular-text">
+                                    <p class="description"><?php _e( 'Motivo del bloqueo (opcional).', 'webtowp-engine' ); ?></p>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <p class="submit">
+                            <button type="submit" class="button button-primary"><?php _e( 'Bloquear IP', 'webtowp-engine' ); ?></button>
+                        </p>
+                    </form>
+                </div>
+
+                <!-- IPs Sospechosas -->
+                <?php if ( ! empty( $suspicious_ips ) ) : ?>
+                    <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                        <h2 style="margin-top: 0;">⚠️ <?php _e( 'IPs Sospechosas (últimos 7 días)', 'webtowp-engine' ); ?></h2>
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead>
+                                <tr>
+                                    <th><?php _e( 'Dirección IP', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Eventos Sospechosos', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Último Evento', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Acciones', 'webtowp-engine' ); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ( $suspicious_ips as $ip_data ) : ?>
+                                    <tr>
+                                        <td><code><?php echo esc_html( $ip_data['ip_address'] ); ?></code></td>
+                                        <td><?php echo esc_html( $ip_data['event_count'] ); ?></td>
+                                        <td><?php echo esc_html( date_i18n( 'Y-m-d H:i', strtotime( $ip_data['last_event'] ) ) ); ?></td>
+                                        <td>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                                                <input type="hidden" name="w2wp_security_action" value="blacklist_ip">
+                                                <input type="hidden" name="ip_address" value="<?php echo esc_attr( $ip_data['ip_address'] ); ?>">
+                                                <input type="hidden" name="reason" value="Actividad sospechosa detectada">
+                                                <button type="submit" class="button button-small"><?php _e( 'Bloquear', 'webtowp-engine' ); ?></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Lista Negra -->
+                <?php if ( ! empty( $blacklist ) ) : ?>
+                    <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                        <h2 style="margin-top: 0;">📋 <?php _e( 'IPs en Lista Negra', 'webtowp-engine' ); ?></h2>
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead>
+                                <tr>
+                                    <th><?php _e( 'Dirección IP', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Acciones', 'webtowp-engine' ); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ( $blacklist as $ip ) : ?>
+                                    <tr>
+                                        <td><code><?php echo esc_html( $ip ); ?></code></td>
+                                        <td>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                                                <input type="hidden" name="w2wp_security_action" value="unblacklist_ip">
+                                                <input type="hidden" name="ip_address" value="<?php echo esc_attr( $ip ); ?>">
+                                                <button type="submit" class="button button-small"><?php _e( 'Desbloquear', 'webtowp-engine' ); ?></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Tab: Security Logs -->
+            <div id="security-logs" class="tab-content" style="display: none;">
+                <div class="webtowp-grid webtowp-grid-4" style="margin: 20px 0;">
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value"><?php echo number_format( $security_stats['total_events'] ); ?></div>
+                        <div class="stat-label"><?php _e( 'Eventos Totales (30d)', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card webtowp-stat-card-warning">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value"><?php echo isset( $security_stats['by_severity']['high'] ) ? $security_stats['by_severity']['high'] : 0; ?></div>
+                        <div class="stat-label"><?php _e( 'Severidad Alta', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card webtowp-stat-card-error">
+                        <div class="stat-icon">🚨</div>
+                        <div class="stat-value"><?php echo isset( $security_stats['by_severity']['critical'] ) ? $security_stats['by_severity']['critical'] : 0; ?></div>
+                        <div class="stat-label"><?php _e( 'Severidad Crítica', 'webtowp-engine' ); ?></div>
+                    </div>
+                    <div class="webtowp-stat-card">
+                        <div class="stat-icon">🌐</div>
+                        <div class="stat-value"><?php echo $security_stats['unique_ips']; ?></div>
+                        <div class="stat-label"><?php _e( 'IPs Únicas', 'webtowp-engine' ); ?></div>
+                    </div>
+                </div>
+
+                <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                    <h2 style="margin-top: 0;">📋 <?php _e( 'Eventos Recientes de Seguridad', 'webtowp-engine' ); ?></h2>
+                    <?php
+                    $recent_logs = $security_logger->get_logs( array( 'limit' => 50 ) );
+                    if ( ! empty( $recent_logs ) ) :
+                    ?>
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead>
+                                <tr>
+                                    <th><?php _e( 'Fecha', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Acción', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Severidad', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'IP', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Usuario', 'webtowp-engine' ); ?></th>
+                                    <th><?php _e( 'Endpoint', 'webtowp-engine' ); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ( $recent_logs as $log ) : ?>
+                                    <tr>
+                                        <td><?php echo esc_html( date_i18n( 'Y-m-d H:i:s', strtotime( $log['created_at'] ) ) ); ?></td>
+                                        <td><?php echo esc_html( $log['action'] ); ?></td>
+                                        <td>
+                                            <?php
+                                            $severity_class = 'default';
+                                            if ( $log['severity'] === 'high' ) $severity_class = 'warning';
+                                            if ( $log['severity'] === 'critical' ) $severity_class = 'error';
+                                            ?>
+                                            <span class="webtowp-badge webtowp-badge-<?php echo esc_attr( $severity_class ); ?>">
+                                                <?php echo esc_html( $log['severity'] ); ?>
+                                            </span>
+                                        </td>
+                                        <td><code><?php echo esc_html( $log['ip_address'] ); ?></code></td>
+                                        <td><?php echo $log['user_id'] ? esc_html( get_userdata( $log['user_id'] )->user_login ) : '-'; ?></td>
+                                        <td><?php echo esc_html( $log['endpoint'] ?: '-' ); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else : ?>
+                        <p style="text-align: center; padding: 40px; color: #666;">
+                            <?php _e( 'No hay eventos de seguridad registrados.', 'webtowp-engine' ); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Tab: Encryption -->
+            <div id="encryption" class="tab-content" style="display: none;">
+                <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                    <h2 style="margin-top: 0;">🔐 <?php _e( 'Encriptación de Datos', 'webtowp-engine' ); ?></h2>
+                    <p><?php _e( 'El sistema utiliza encriptación AES-256-CBC para proteger datos sensibles.', 'webtowp-engine' ); ?></p>
+                    
+                    <div class="webtowp-alert webtowp-alert-info" style="margin: 20px 0;">
+                        <strong><?php _e( 'Estado:', 'webtowp-engine' ); ?></strong>
+                        <?php if ( extension_loaded( 'openssl' ) ) : ?>
+                            <span class="webtowp-badge webtowp-badge-success"><?php _e( 'OpenSSL Disponible', 'webtowp-engine' ); ?></span>
+                        <?php else : ?>
+                            <span class="webtowp-badge webtowp-badge-error"><?php _e( 'OpenSSL No Disponible', 'webtowp-engine' ); ?></span>
+                        <?php endif; ?>
+                    </div>
+
+                    <h3><?php _e( 'Regenerar Clave de Encriptación', 'webtowp-engine' ); ?></h3>
+                    <div class="webtowp-alert webtowp-alert-warning">
+                        <strong><?php _e( '⚠️ ADVERTENCIA:', 'webtowp-engine' ); ?></strong>
+                        <?php _e( 'Regenerar la clave de encriptación invalidará TODOS los datos encriptados existentes. Esta acción no se puede deshacer.', 'webtowp-engine' ); ?>
+                    </div>
+
+                    <form method="post" onsubmit="return confirm('<?php esc_attr_e( '¿Estás ABSOLUTAMENTE seguro? Esto invalidará todos los datos encriptados.', 'webtowp-engine' ); ?>');">
+                        <?php wp_nonce_field( 'w2wp_security_action' ); ?>
+                        <input type="hidden" name="w2wp_security_action" value="regenerate_encryption_key">
+                        <label>
+                            <input type="checkbox" name="confirm_regenerate" value="1" required>
+                            <?php _e( 'Entiendo que esta acción invalidará todos los datos encriptados', 'webtowp-engine' ); ?>
+                        </label>
+                        <p class="submit">
+                            <button type="submit" class="button button-secondary"><?php _e( 'Regenerar Clave de Encriptación', 'webtowp-engine' ); ?></button>
+                        </p>
+                    </form>
+                </div>
+
+                <div class="postbox" style="padding: 20px; margin-top: 20px; background: #f0f6fc; border-left: 4px solid #0073aa;">
+                    <h3 style="margin-top: 0;">ℹ️ <?php _e( 'Información sobre Encriptación', 'webtowp-engine' ); ?></h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><?php _e( 'Se utiliza AES-256-CBC, uno de los algoritmos de encriptación más seguros.', 'webtowp-engine' ); ?></li>
+                        <li><?php _e( 'La clave de encriptación se genera automáticamente y se almacena de forma segura.', 'webtowp-engine' ); ?></li>
+                        <li><?php _e( 'Los datos sensibles como webhooks y configuraciones privadas se encriptan automáticamente.', 'webtowp-engine' ); ?></li>
+                        <li><?php _e( 'Las API keys se almacenan como hash SHA-256 (no reversible).', 'webtowp-engine' ); ?></li>
+                    </ul>
+                </div>
+            </div>
+
+            <script>
+            jQuery(document).ready(function($) {
+                // Tab switching
+                $('.nav-tab').on('click', function(e) {
+                    e.preventDefault();
+                    var target = $(this).attr('href');
+                    
+                    $('.nav-tab').removeClass('nav-tab-active');
+                    $(this).addClass('nav-tab-active');
+                    
+                    $('.tab-content').hide();
+                    $(target).show();
+                });
+            });
+            </script>
         </div>
         <?php
     }
