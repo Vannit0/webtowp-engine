@@ -96,7 +96,7 @@ class W2WP_Dashboard {
             'cache' => $cache_stats,
             'modules' => $active_modules,
             'posts' => $post_counts,
-            'wp_version' => get_bloginfo( 'version' ),
+            'wp_version' => get_bloginfo( 'version' ) ?: '',
             'php_version' => PHP_VERSION,
             'plugin_version' => W2WP_VERSION,
         );

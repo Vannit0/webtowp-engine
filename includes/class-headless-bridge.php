@@ -103,9 +103,16 @@ class W2WP_Headless_Bridge {
         if ( empty( $seo_data['image'] ) ) {
             $default_seo_image = get_option( 'w2wp_default_seo_image', '' );
             if ( ! empty( $default_seo_image ) ) {
+                $brand_name = get_option( 'w2wp_brand_name', '' );
+                if ( empty( $brand_name ) ) {
+                    $brand_name = get_bloginfo( 'name' );
+                    if ( ! is_string( $brand_name ) || empty( $brand_name ) ) {
+                        $brand_name = 'WebToWP';
+                    }
+                }
                 $seo_data['image'] = array(
                     'url' => $default_seo_image,
-                    'alt' => get_option( 'w2wp_brand_name', get_bloginfo( 'name' ) ),
+                    'alt' => $brand_name,
                 );
             }
         }
@@ -168,7 +175,7 @@ class W2WP_Headless_Bridge {
         add_filter( 'rest_pre_serve_request', function( $served, $result, $request, $server ) use ( $origins ) {
             $origin = get_http_origin();
             
-            if ( $origin && in_array( $origin, $origins, true ) ) {
+            if ( is_string( $origin ) && ! empty( $origin ) && in_array( $origin, $origins, true ) ) {
                 header( 'Access-Control-Allow-Origin: ' . esc_url_raw( $origin ) );
                 header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
                 header( 'Access-Control-Allow-Credentials: true' );

@@ -169,7 +169,8 @@ class W2WP_Dependency_Checker {
      */
     public function deactivate_if_dependencies_missing() {
         if ( ! $this->are_dependencies_met() ) {
-            deactivate_plugins( plugin_basename( W2WP_PATH . '/webtowp-engine.php' ) );
+            $plugin_file = defined( 'W2WP_BASENAME' ) ? W2WP_BASENAME : plugin_basename( W2WP_PATH . 'webtowp-engine.php' );
+            deactivate_plugins( $plugin_file );
             
             // Mostrar mensaje de error
             wp_die(

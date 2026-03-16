@@ -127,6 +127,14 @@ class W2WP_i18n {
         $locale = get_locale();
         $language = get_bloginfo( 'language' );
         
+        // Validar que no sean null
+        if ( ! is_string( $locale ) || empty( $locale ) ) {
+            $locale = 'en_US';
+        }
+        if ( ! is_string( $language ) || empty( $language ) ) {
+            $language = 'en-US';
+        }
+        
         return array(
             'locale' => $locale,
             'language' => $language,

@@ -94,14 +94,14 @@ class W2WP_API_Config {
         $response = array(
             'success' => true,
             'data'    => array(
-                'name'        => get_bloginfo( 'name' ),
-                'description' => get_bloginfo( 'description' ),
-                'url'         => get_bloginfo( 'url' ),
+                'name'        => get_bloginfo( 'name' ) ?: '',
+                'description' => get_bloginfo( 'description' ) ?: '',
+                'url'         => get_bloginfo( 'url' ) ?: home_url(),
                 'logo'        => $site_logo_url,
-                'admin_email' => get_bloginfo( 'admin_email' ),
-                'language'    => get_bloginfo( 'language' ),
-                'charset'     => get_bloginfo( 'charset' ),
-                'version'     => get_bloginfo( 'version' ),
+                'admin_email' => get_bloginfo( 'admin_email' ) ?: get_option( 'admin_email', '' ),
+                'language'    => get_bloginfo( 'language' ) ?: 'en-US',
+                'charset'     => get_bloginfo( 'charset' ) ?: 'UTF-8',
+                'version'     => get_bloginfo( 'version' ) ?: '',
                 'plugin_version' => W2WP_VERSION,
             ),
             'timestamp' => current_time( 'mysql' ),
@@ -240,7 +240,7 @@ class W2WP_API_Config {
             'success' => true,
             'data' => array(
                 'system' => array(
-                    'wordpress_version' => get_bloginfo( 'version' ),
+                    'wordpress_version' => get_bloginfo( 'version' ) ?: '',
                     'php_version' => phpversion(),
                     'plugin_version' => W2WP_VERSION,
                     'acf_active' => class_exists( 'ACF' ),
