@@ -3,7 +3,7 @@
  * Plugin Name: WebToWP Engine
  * Plugin URI: https://webtowp.com
  * Description: A powerful engine to convert web content into WordPress content with modular architecture
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: WebToWP Team
  * Author URI: https://webtowp.com
  * License: GPL v2 or later
@@ -18,7 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'W2WP_VERSION', '1.1.1' );
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+define( 'W2WP_VERSION', '1.1.2' );
 define( 'W2WP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'W2WP_URL', plugin_dir_url( __FILE__ ) );
 define( 'W2WP_BASENAME', plugin_basename( __FILE__ ) );
@@ -30,27 +32,27 @@ function webtowp_engine() {
     return WebToWP_Engine::get_instance();
 }
 
-register_activation_hook( __FILE__, array( 'W2WP_Setup', 'create_initial_pages' ) );
+register_activation_hook( __FILE__, array( 'W2WP_Setup', 'activate_plugin' ) );
 
 $update_checker_path = W2WP_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
 if ( file_exists( $update_checker_path ) ) {
     require_once $update_checker_path;
     
-    use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-    
-    $myUpdateChecker = PucFactory::buildUpdateChecker(
-        'https://github.com/Vannit0/webtowp-engine',
-        __FILE__,
-        'webtowp-engine'
-    );
-    
-    $myUpdateChecker->setBranch( 'main' );
-    
-    if ( defined( 'W2WP_GITHUB_TOKEN' ) && W2WP_GITHUB_TOKEN ) {
-        $myUpdateChecker->setAuthentication( W2WP_GITHUB_TOKEN );
+    if ( class_exists( 'YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
+        $myUpdateChecker = PucFactory::buildUpdateChecker(
+            'https://github.com/Vannit0/webtowp-engine',
+            __FILE__,
+            'webtowp-engine'
+        );
+        
+        $myUpdateChecker->setBranch( 'main' );
+        
+        if ( defined( 'W2WP_GITHUB_TOKEN' ) && W2WP_GITHUB_TOKEN ) {
+            $myUpdateChecker->setAuthentication( W2WP_GITHUB_TOKEN );
+        }
+        
+        $myUpdateChecker->getVcsApi()->enableReleaseAssets();
     }
-    
-    $myUpdateChecker->getVcsApi()->enableReleaseAssets();
 }
 
 webtowp_engine();

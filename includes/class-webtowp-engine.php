@@ -92,6 +92,10 @@ class WebToWP_Engine {
         new W2WP_API_Config();
         new W2WP_ACF_Fields();
         W2WP_Admin_Setup::get_instance();
+        W2WP_Module_Manager::get_instance();
+        W2WP_Module_Informativo::get_instance();
+        W2WP_Module_Landing::get_instance();
+        W2WP_Headless_Bridge::get_instance();
     }
 
     private function __clone() {}

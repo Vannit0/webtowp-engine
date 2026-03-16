@@ -5,6 +5,43 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class W2WP_Setup {
 
+    public static function activate_plugin() {
+        self::create_initial_pages();
+        self::set_default_branding();
+        self::create_deployment_log_table();
+    }
+
+    public static function set_default_branding() {
+        if ( ! get_option( 'w2wp_signature_text' ) ) {
+            update_option( 'w2wp_signature_text', 'Desarrollado por WebToWP' );
+        }
+        if ( ! get_option( 'w2wp_signature_url' ) ) {
+            update_option( 'w2wp_signature_url', 'https://webtowp.com' );
+        }
+        error_log( '[WebToWP Engine] Valores de marca blanca configurados por defecto.' );
+    }
+
+    public static function create_deployment_log_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'w2wp_deployment_logs';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            timestamp datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            action varchar(100) NOT NULL,
+            response_code int(3) DEFAULT NULL,
+            response_message text DEFAULT NULL,
+            user_id bigint(20) DEFAULT NULL,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+        dbDelta( $sql );
+        
+        error_log( '[WebToWP Engine] Tabla de logs de despliegue creada/verificada.' );
+    }
+
     public static function create_initial_pages() {
         $pages = array(
             'Inicio',

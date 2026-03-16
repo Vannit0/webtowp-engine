@@ -17,6 +17,7 @@ class W2WP_ACF_Fields {
         $this->register_hero_home_fields();
         $this->register_servicios_fields();
         $this->register_global_marquee_fields();
+        $this->register_seo_fields();
     }
 
     private function register_hero_home_fields() {
@@ -227,6 +228,90 @@ class W2WP_ACF_Fields {
                 ),
             ),
             'menu_order' => 1,
+            'position' => 'normal',
+            'style' => 'default',
+            'label_placement' => 'top',
+            'instruction_placement' => 'label',
+            'show_in_rest' => 1,
+        ) );
+    }
+
+    private function register_seo_fields() {
+        acf_add_local_field_group( array(
+            'key' => 'group_seo_social',
+            'title' => 'SEO & Redes Sociales',
+            'fields' => array(
+                array(
+                    'key' => 'field_seo_title',
+                    'label' => 'SEO Title',
+                    'name' => 'seo_title',
+                    'type' => 'text',
+                    'instructions' => 'Título optimizado para motores de búsqueda (50-60 caracteres)',
+                    'maxlength' => 60,
+                    'placeholder' => 'Título SEO personalizado',
+                    'show_in_rest' => 1,
+                ),
+                array(
+                    'key' => 'field_seo_description',
+                    'label' => 'SEO Description',
+                    'name' => 'seo_description',
+                    'type' => 'textarea',
+                    'instructions' => 'Descripción optimizada para motores de búsqueda (150-160 caracteres)',
+                    'maxlength' => 160,
+                    'rows' => 3,
+                    'placeholder' => 'Descripción SEO personalizada',
+                    'show_in_rest' => 1,
+                ),
+                array(
+                    'key' => 'field_seo_image',
+                    'label' => 'SEO Image (Open Graph)',
+                    'name' => 'seo_image',
+                    'type' => 'image',
+                    'instructions' => 'Imagen para compartir en redes sociales (1200x630px recomendado)',
+                    'return_format' => 'array',
+                    'preview_size' => 'medium',
+                    'library' => 'all',
+                    'show_in_rest' => 1,
+                ),
+            ),
+            'location' => array(
+                array(
+                    array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'page',
+                    ),
+                ),
+                array(
+                    array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'post',
+                    ),
+                ),
+                array(
+                    array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'w2wp_servicios',
+                    ),
+                ),
+                array(
+                    array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'w2wp_recursos',
+                    ),
+                ),
+                array(
+                    array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'servicio_medico',
+                    ),
+                ),
+            ),
+            'menu_order' => 100,
             'position' => 'normal',
             'style' => 'default',
             'label_placement' => 'top',
