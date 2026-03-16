@@ -6,12 +6,14 @@
  * Version: 1.4.0
  * Author: WebToWP Team
  * Author URI: https://webtowp.com
- * License: GPL v2 or later
+ * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: webtowp-engine
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
+ * Network: false
+ * Update URI: https://github.com/Vannit0/webtowp-engine
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
