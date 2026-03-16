@@ -26,6 +26,7 @@ class W2WP_Headless_Bridge {
         add_action( 'rest_api_init', array( $this, 'configure_cors' ) );
         add_action( 'admin_bar_menu', array( $this, 'add_deploy_button' ), 100 );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_deploy_scripts' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_cache_scripts' ) );
         add_action( 'wp_ajax_w2wp_trigger_deploy', array( $this, 'trigger_deploy' ) );
     }
 
@@ -272,9 +273,11 @@ class W2WP_Headless_Bridge {
             ) );
         }
 
+        $logger = W2WP_Deployment_Logger::get_instance();
         $webhook_url = get_option( 'w2wp_webhook_url', '' );
 
         if ( empty( $webhook_url ) ) {
+            $logger->log_error( 'manual_deploy', 0, 'Webhook URL no configurada' );
             wp_send_json_error( array(
                 'message' => 'Configura la URL de Cloudflare en los ajustes (WebToWP > Despliegue & API)',
             ) );
@@ -293,24 +296,56 @@ class W2WP_Headless_Bridge {
         ) );
 
         if ( is_wp_error( $response ) ) {
-            error_log( '[WebToWP Engine] Error al disparar webhook: ' . $response->get_error_message() );
+            $error_message = $response->get_error_message();
+            error_log( '[WebToWP Engine] Error al disparar webhook: ' . $error_message );
+            $logger->log_error( 'manual_deploy', 0, 'Error de conexión: ' . $error_message );
             wp_send_json_error( array(
-                'message' => 'Error al conectar con el webhook: ' . $response->get_error_message(),
+                'message' => 'Error al conectar con el webhook: ' . $error_message,
             ) );
         }
 
         $response_code = wp_remote_retrieve_response_code( $response );
+        $response_body = wp_remote_retrieve_body( $response );
         
         if ( $response_code >= 200 && $response_code < 300 ) {
             error_log( '[WebToWP Engine] Webhook disparado exitosamente. Código: ' . $response_code );
+            $logger->log_success( 'manual_deploy', $response_code, 'Deployment exitoso' );
+            
+            // Limpiar caché después de deployment exitoso
+            $cache = W2WP_Cache_Manager::get_instance();
+            $cache->clear_all();
+            
             wp_send_json_success( array(
                 'message' => '¡Despliegue enviado exitosamente! Tu sitio se actualizará en breve.',
             ) );
         } else {
             error_log( '[WebToWP Engine] Webhook respondió con código: ' . $response_code );
+            $logger->log_error( 'manual_deploy', $response_code, 'Código de respuesta: ' . $response_code . ' - ' . substr( $response_body, 0, 200 ) );
             wp_send_json_error( array(
                 'message' => 'El webhook respondió con código ' . $response_code . '. Verifica la configuración.',
             ) );
         }
+    }
+
+    public function enqueue_cache_scripts() {
+        wp_enqueue_script(
+            'w2wp-cache',
+            W2WP_ASSETS_URL . 'js/cache.js',
+            array( 'jquery' ),
+            W2WP_VERSION,
+            true
+        );
+
+        wp_localize_script( 'w2wp-cache', 'w2wpCache', array(
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'w2wp_clear_cache_nonce' ),
+        ) );
+
+        wp_enqueue_style(
+            'w2wp-cache',
+            W2WP_ASSETS_URL . 'css/cache.css',
+            array(),
+            W2WP_VERSION
+        );
     }
 }

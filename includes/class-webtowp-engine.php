@@ -89,6 +89,23 @@ class WebToWP_Engine {
     }
 
     private function init_components() {
+        // Verificar dependencias primero
+        $dependency_checker = W2WP_Dependency_Checker::get_instance();
+        
+        // Si las dependencias no están satisfechas, no inicializar componentes
+        if ( ! $dependency_checker->are_dependencies_met() ) {
+            return;
+        }
+
+        W2WP_i18n::get_instance();
+        W2WP_Rewrite_Manager::get_instance();
+        W2WP_Notice_Manager::get_instance();
+        W2WP_Cache_Manager::get_instance();
+        W2WP_Deployment_Logger::get_instance();
+        W2WP_Backup_Manager::get_instance();
+        W2WP_Dashboard::get_instance();
+        W2WP_Notification_System::get_instance();
+        W2WP_Onboarding_Wizard::get_instance();
         new W2WP_API_Config();
         new W2WP_ACF_Fields();
         W2WP_Admin_Setup::get_instance();

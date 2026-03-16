@@ -1,0 +1,34 @@
+.w2wp-cache-notice {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    background: #fff;
+    border-left: 4px solid #46b450;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 15px 20px;
+    z-index: 999999;
+    min-width: 300px;
+    max-width: 500px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
+}
+
+.w2wp-cache-notice.error {
+    border-left-color: #dc3232;
+}
+
+.w2wp-cache-notice.success {
+    border-left-color: #46b450;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

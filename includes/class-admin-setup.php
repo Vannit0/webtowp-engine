@@ -73,6 +73,24 @@ class W2WP_Admin_Setup {
             'webtowp-system-status',
             array( $this, 'render_system_status_page' )
         );
+
+        add_submenu_page(
+            'webtowp-engine',
+            __( 'Logs de Deployment', 'webtowp-engine' ),
+            __( 'Logs de Deployment', 'webtowp-engine' ),
+            'manage_options',
+            'webtowp-deployment-logs',
+            array( $this, 'render_deployment_logs_page' )
+        );
+
+        add_submenu_page(
+            'webtowp-engine',
+            __( 'Backup & Restauración', 'webtowp-engine' ),
+            __( 'Backup & Restauración', 'webtowp-engine' ),
+            'manage_options',
+            'webtowp-backup',
+            array( $this, 'render_backup_page' )
+        );
         
         error_log( 'W2WP_Admin_Setup: Menús nativos registrados' );
     }
@@ -120,21 +138,196 @@ class W2WP_Admin_Setup {
     }
 
     public function render_main_page() {
+        $dashboard = W2WP_Dashboard::get_instance();
+        $stats = $dashboard->get_system_stats();
+        $health = $dashboard->get_health_status();
+        $activity = $dashboard->get_recent_activity();
+        $tasks = $dashboard->get_pending_tasks();
+        $quick_links = $dashboard->get_quick_links();
+        
         ?>
-        <div class="wrap">
-            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin: 20px 0;">
-                <h2 style="color: white; margin-top: 0;">🚀 WebToWP Engine</h2>
-                <p style="font-size: 16px; margin: 0;"><?php _e( 'Motor headless para WordPress. Configura tus módulos y conecta tu frontend moderno.', 'webtowp-engine' ); ?></p>
+        <div class="wrap webtowp-admin-page">
+            <!-- Header -->
+            <div class="webtowp-header">
+                <h1>🚀 <?php _e( 'WebToWP Engine Dashboard', 'webtowp-engine' ); ?></h1>
+                <p><?php _e( 'Motor headless para WordPress. Gestiona tu sitio desde un panel moderno y potente.', 'webtowp-engine' ); ?></p>
             </div>
-            <div class="card" style="padding: 20px;">
-                <h3><?php _e( 'Inicio Rápido', 'webtowp-engine' ); ?></h3>
-                <ol>
-                    <li><?php _e( 'Ve a <strong>Módulos Activos</strong> y activa el módulo que necesites', 'webtowp-engine' ); ?></li>
-                    <li><?php _e( 'Configura los <strong>Ajustes Globales</strong> de tu sitio', 'webtowp-engine' ); ?></li>
-                    <li><?php _e( 'En <strong>Despliegue & API</strong>, conecta tu webhook de Cloudflare', 'webtowp-engine' ); ?></li>
-                    <li><?php _e( 'Usa la API REST en <code>/wp-json/wp/v2/</code> para consumir el contenido', 'webtowp-engine' ); ?></li>
-                </ol>
+
+            <!-- Health Status -->
+            <div class="webtowp-card webtowp-fade-in">
+                <div class="webtowp-card-header">
+                    <h2 class="webtowp-card-title">
+                        <span class="webtowp-card-icon">💚</span>
+                        <?php _e( 'Estado de Salud del Sistema', 'webtowp-engine' ); ?>
+                    </h2>
+                    <span class="webtowp-badge webtowp-badge-<?php echo $health['status'] === 'excellent' ? 'success' : 'warning'; ?>">
+                        <?php echo esc_html( $health['score'] ); ?>%
+                    </span>
+                </div>
+                <div class="webtowp-card-body">
+                    <div class="webtowp-progress">
+                        <div class="webtowp-progress-bar" style="width: <?php echo esc_attr( $health['score'] ); ?>%"></div>
+                    </div>
+                    <?php if ( ! empty( $health['issues'] ) ) : ?>
+                        <div style="margin-top: 15px;">
+                            <?php foreach ( $health['issues'] as $issue ) : ?>
+                                <div class="webtowp-alert webtowp-alert-<?php echo esc_attr( $issue['type'] ); ?>" style="margin-bottom: 10px;">
+                                    <span class="webtowp-alert-icon">
+                                        <?php echo $issue['type'] === 'error' ? '❌' : ($issue['type'] === 'warning' ? '⚠️' : 'ℹ️'); ?>
+                                    </span>
+                                    <div class="webtowp-alert-content">
+                                        <p class="webtowp-alert-message"><?php echo esc_html( $issue['message'] ); ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="webtowp-grid webtowp-grid-4">
+                <div class="webtowp-stat-card success">
+                    <h3 class="webtowp-stat-label"><?php _e( 'Deployments (30d)', 'webtowp-engine' ); ?></h3>
+                    <p class="webtowp-stat-value"><?php echo esc_html( $stats['deployments']['total'] ); ?></p>
+                    <div class="webtowp-stat-change positive">
+                        ↗ <?php echo esc_html( $stats['deployments']['success_rate'] ); ?>% <?php _e( 'éxito', 'webtowp-engine' ); ?>
+                    </div>
+                </div>
+
+                <div class="webtowp-stat-card info">
+                    <h3 class="webtowp-stat-label"><?php _e( 'Items en Caché', 'webtowp-engine' ); ?></h3>
+                    <p class="webtowp-stat-value"><?php echo esc_html( $stats['cache']['count'] ); ?></p>
+                    <div class="webtowp-stat-change">
+                        📦 <?php echo esc_html( size_format( $stats['cache']['size'] ) ); ?>
+                    </div>
+                </div>
+
+                <div class="webtowp-stat-card">
+                    <h3 class="webtowp-stat-label"><?php _e( 'Módulos Activos', 'webtowp-engine' ); ?></h3>
+                    <p class="webtowp-stat-value"><?php echo esc_html( count( $stats['modules'] ) ); ?></p>
+                    <div class="webtowp-stat-change">
+                        🔧 <?php echo esc_html( implode( ', ', $stats['modules'] ) ?: __( 'Ninguno', 'webtowp-engine' ) ); ?>
+                    </div>
+                </div>
+
+                <div class="webtowp-stat-card">
+                    <h3 class="webtowp-stat-label"><?php _e( 'Contenido Total', 'webtowp-engine' ); ?></h3>
+                    <p class="webtowp-stat-value"><?php echo esc_html( array_sum( $stats['posts'] ) ); ?></p>
+                    <div class="webtowp-stat-change">
+                        📝 <?php printf( __( '%d posts, %d páginas', 'webtowp-engine' ), $stats['posts']['posts'], $stats['posts']['pages'] ); ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="webtowp-grid webtowp-grid-2">
+                <!-- Pending Tasks -->
+                <?php if ( ! empty( $tasks ) ) : ?>
+                <div class="webtowp-card">
+                    <div class="webtowp-card-header">
+                        <h2 class="webtowp-card-title">
+                            <span class="webtowp-card-icon">✅</span>
+                            <?php _e( 'Tareas Pendientes', 'webtowp-engine' ); ?>
+                        </h2>
+                        <span class="webtowp-badge webtowp-badge-warning"><?php echo count( $tasks ); ?></span>
+                    </div>
+                    <div class="webtowp-card-body">
+                        <?php foreach ( $tasks as $task ) : ?>
+                            <div style="padding: 15px; background: #f8fafc; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid <?php echo $task['priority'] === 'high' ? '#dc3232' : ($task['priority'] === 'medium' ? '#ffb900' : '#0073aa'); ?>;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px;"><?php echo esc_html( $task['title'] ); ?></h4>
+                                <p style="margin: 0 0 10px 0; font-size: 13px; color: #64748b;"><?php echo esc_html( $task['description'] ); ?></p>
+                                <a href="<?php echo esc_url( $task['action_url'] ); ?>" class="webtowp-button webtowp-button-primary" style="font-size: 12px; padding: 6px 12px;">
+                                    <?php echo esc_html( $task['action_text'] ); ?> →
+                                </a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Recent Activity -->
+                <div class="webtowp-card">
+                    <div class="webtowp-card-header">
+                        <h2 class="webtowp-card-title">
+                            <span class="webtowp-card-icon">📊</span>
+                            <?php _e( 'Actividad Reciente', 'webtowp-engine' ); ?>
+                        </h2>
+                    </div>
+                    <div class="webtowp-card-body">
+                        <?php if ( ! empty( $activity ) ) : ?>
+                            <?php foreach ( $activity as $item ) : ?>
+                                <div style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <span class="webtowp-badge webtowp-badge-<?php echo $item['status'] === 'success' ? 'success' : 'error'; ?>">
+                                                <?php echo esc_html( $item['type'] ); ?>
+                                            </span>
+                                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;">
+                                                <?php echo esc_html( wp_trim_words( $item['message'], 10 ) ); ?>
+                                            </p>
+                                        </div>
+                                        <span style="font-size: 12px; color: #94a3b8;">
+                                            <?php echo esc_html( human_time_diff( strtotime( $item['timestamp'] ), current_time( 'timestamp' ) ) ); ?> ago
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <p style="text-align: center; color: #94a3b8; padding: 20px 0;">
+                                <?php _e( 'No hay actividad reciente', 'webtowp-engine' ); ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="webtowp-card">
+                <div class="webtowp-card-header">
+                    <h2 class="webtowp-card-title">
+                        <span class="webtowp-card-icon">⚡</span>
+                        <?php _e( 'Accesos Rápidos', 'webtowp-engine' ); ?>
+                    </h2>
+                </div>
+                <div class="webtowp-card-body">
+                    <div class="webtowp-grid webtowp-grid-3">
+                        <?php foreach ( $quick_links as $link ) : ?>
+                            <a href="<?php echo esc_url( $link['url'] ); ?>" style="text-decoration: none; color: inherit;">
+                                <div style="padding: 20px; background: #f8fafc; border-radius: 8px; transition: all 0.3s ease; border: 2px solid transparent;">
+                                    <div style="font-size: 32px; margin-bottom: 10px;"><?php echo $link['icon']; ?></div>
+                                    <h4 style="margin: 0 0 5px 0; font-size: 16px; color: #1e293b;"><?php echo esc_html( $link['title'] ); ?></h4>
+                                    <p style="margin: 0; font-size: 13px; color: #64748b;"><?php echo esc_html( $link['description'] ); ?></p>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="webtowp-card" style="background: #f0f6fc; border-left: 4px solid #0073aa;">
+                <div class="webtowp-card-header">
+                    <h2 class="webtowp-card-title">
+                        <span class="webtowp-card-icon">ℹ️</span>
+                        <?php _e( 'Información del Sistema', 'webtowp-engine' ); ?>
+                    </h2>
+                </div>
+                <div class="webtowp-card-body">
+                    <div class="webtowp-grid webtowp-grid-3">
+                        <div>
+                            <strong><?php _e( 'WordPress:', 'webtowp-engine' ); ?></strong>
+                            <p style="margin: 5px 0 0 0;"><?php echo esc_html( $stats['wp_version'] ); ?></p>
+                        </div>
+                        <div>
+                            <strong><?php _e( 'PHP:', 'webtowp-engine' ); ?></strong>
+                            <p style="margin: 5px 0 0 0;"><?php echo esc_html( $stats['php_version'] ); ?></p>
+                        </div>
+                        <div>
+                            <strong><?php _e( 'Plugin:', 'webtowp-engine' ); ?></strong>
+                            <p style="margin: 5px 0 0 0;"><?php echo esc_html( $stats['plugin_version'] ); ?></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
@@ -804,28 +997,89 @@ class W2WP_Admin_Setup {
             wp_die( __( 'No tienes permisos suficientes', 'webtowp-engine' ) );
         }
 
-        $logo_principal = isset( $_POST['w2wp_logo_principal'] ) ? esc_url_raw( $_POST['w2wp_logo_principal'] ) : '';
-        $logo_contraste = isset( $_POST['w2wp_logo_contraste'] ) ? esc_url_raw( $_POST['w2wp_logo_contraste'] ) : '';
-        $favicon = isset( $_POST['w2wp_favicon'] ) ? esc_url_raw( $_POST['w2wp_favicon'] ) : '';
-        $brand_name = isset( $_POST['w2wp_brand_name'] ) ? sanitize_text_field( $_POST['w2wp_brand_name'] ) : '';
-        $copyright_text = isset( $_POST['w2wp_copyright_text'] ) ? sanitize_text_field( $_POST['w2wp_copyright_text'] ) : '';
-        $primary_color = isset( $_POST['w2wp_primary_color'] ) ? sanitize_hex_color( $_POST['w2wp_primary_color'] ) : '#667eea';
-        $secondary_color = isset( $_POST['w2wp_secondary_color'] ) ? sanitize_hex_color( $_POST['w2wp_secondary_color'] ) : '#764ba2';
-        $whatsapp_contact = isset( $_POST['w2wp_whatsapp_contact'] ) ? sanitize_text_field( $_POST['w2wp_whatsapp_contact'] ) : '';
-        $support_email = isset( $_POST['w2wp_support_email'] ) ? sanitize_email( $_POST['w2wp_support_email'] ) : '';
-        $physical_address = isset( $_POST['w2wp_physical_address'] ) ? sanitize_textarea_field( $_POST['w2wp_physical_address'] ) : '';
-        $social_instagram = isset( $_POST['w2wp_social_instagram'] ) ? esc_url_raw( $_POST['w2wp_social_instagram'] ) : '';
-        $social_linkedin = isset( $_POST['w2wp_social_linkedin'] ) ? esc_url_raw( $_POST['w2wp_social_linkedin'] ) : '';
-        $social_facebook = isset( $_POST['w2wp_social_facebook'] ) ? esc_url_raw( $_POST['w2wp_social_facebook'] ) : '';
-        $social_twitter = isset( $_POST['w2wp_social_twitter'] ) ? esc_url_raw( $_POST['w2wp_social_twitter'] ) : '';
-        $social_youtube = isset( $_POST['w2wp_social_youtube'] ) ? esc_url_raw( $_POST['w2wp_social_youtube'] ) : '';
-        $google_analytics_id = isset( $_POST['w2wp_google_analytics_id'] ) ? sanitize_text_field( $_POST['w2wp_google_analytics_id'] ) : '';
-        $facebook_pixel_id = isset( $_POST['w2wp_facebook_pixel_id'] ) ? sanitize_text_field( $_POST['w2wp_facebook_pixel_id'] ) : '';
-        $frontend_url = isset( $_POST['w2wp_frontend_url'] ) ? esc_url_raw( $_POST['w2wp_frontend_url'] ) : '';
-        $header_scripts = isset( $_POST['w2wp_header_scripts'] ) ? wp_kses_post( $_POST['w2wp_header_scripts'] ) : '';
-        $footer_scripts = isset( $_POST['w2wp_footer_scripts'] ) ? wp_kses_post( $_POST['w2wp_footer_scripts'] ) : '';
-        $default_seo_image = isset( $_POST['w2wp_default_seo_image'] ) ? esc_url_raw( $_POST['w2wp_default_seo_image'] ) : '';
+        $notice_manager = W2WP_Notice_Manager::get_instance();
+        $errors = array();
 
+        // Validar y sanitizar URLs de imágenes
+        $logo_principal = isset( $_POST['w2wp_logo_principal'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_logo_principal'] ) : '';
+        $logo_contraste = isset( $_POST['w2wp_logo_contraste'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_logo_contraste'] ) : '';
+        $favicon = isset( $_POST['w2wp_favicon'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_favicon'] ) : '';
+        $default_seo_image = isset( $_POST['w2wp_default_seo_image'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_default_seo_image'] ) : '';
+        
+        // Validar y sanitizar textos
+        $brand_name = isset( $_POST['w2wp_brand_name'] ) ? W2WP_Validator::sanitize_text( $_POST['w2wp_brand_name'] ) : '';
+        $copyright_text = isset( $_POST['w2wp_copyright_text'] ) ? W2WP_Validator::sanitize_text( $_POST['w2wp_copyright_text'] ) : '';
+        
+        // Validar y sanitizar colores
+        $primary_color = isset( $_POST['w2wp_primary_color'] ) ? W2WP_Validator::sanitize_hex_color( $_POST['w2wp_primary_color'] ) : '#667eea';
+        $secondary_color = isset( $_POST['w2wp_secondary_color'] ) ? W2WP_Validator::sanitize_hex_color( $_POST['w2wp_secondary_color'] ) : '#764ba2';
+        
+        if ( empty( $primary_color ) ) {
+            $primary_color = '#667eea';
+            $errors['primary_color'][] = __( 'El color primario no es válido, se usó el valor por defecto.', 'webtowp-engine' );
+        }
+        if ( empty( $secondary_color ) ) {
+            $secondary_color = '#764ba2';
+            $errors['secondary_color'][] = __( 'El color secundario no es válido, se usó el valor por defecto.', 'webtowp-engine' );
+        }
+        
+        // Validar y sanitizar WhatsApp
+        $whatsapp_contact = isset( $_POST['w2wp_whatsapp_contact'] ) ? W2WP_Validator::sanitize_phone( $_POST['w2wp_whatsapp_contact'] ) : '';
+        if ( ! empty( $whatsapp_contact ) && ! W2WP_Validator::is_valid_phone( $whatsapp_contact ) ) {
+            $errors['whatsapp_contact'][] = __( 'El número de WhatsApp no tiene un formato válido.', 'webtowp-engine' );
+        }
+        
+        // Validar y sanitizar email
+        $support_email = isset( $_POST['w2wp_support_email'] ) ? W2WP_Validator::sanitize_email( $_POST['w2wp_support_email'] ) : '';
+        if ( ! empty( $support_email ) && ! W2WP_Validator::is_valid_email( $support_email ) ) {
+            $errors['support_email'][] = __( 'El email de soporte no es válido.', 'webtowp-engine' );
+        }
+        
+        // Validar y sanitizar dirección física
+        $physical_address = isset( $_POST['w2wp_physical_address'] ) ? W2WP_Validator::sanitize_textarea( $_POST['w2wp_physical_address'] ) : '';
+        
+        // Validar y sanitizar URLs de redes sociales
+        $social_instagram = isset( $_POST['w2wp_social_instagram'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_social_instagram'] ) : '';
+        $social_linkedin = isset( $_POST['w2wp_social_linkedin'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_social_linkedin'] ) : '';
+        $social_facebook = isset( $_POST['w2wp_social_facebook'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_social_facebook'] ) : '';
+        $social_twitter = isset( $_POST['w2wp_social_twitter'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_social_twitter'] ) : '';
+        $social_youtube = isset( $_POST['w2wp_social_youtube'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_social_youtube'] ) : '';
+        
+        // Validar y sanitizar IDs de tracking
+        $google_analytics_id = isset( $_POST['w2wp_google_analytics_id'] ) ? W2WP_Validator::sanitize_text( $_POST['w2wp_google_analytics_id'] ) : '';
+        $facebook_pixel_id = isset( $_POST['w2wp_facebook_pixel_id'] ) ? W2WP_Validator::sanitize_text( $_POST['w2wp_facebook_pixel_id'] ) : '';
+        
+        // Validar y sanitizar frontend URL
+        $frontend_url = isset( $_POST['w2wp_frontend_url'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_frontend_url'] ) : '';
+        if ( ! empty( $frontend_url ) && ! filter_var( $frontend_url, FILTER_VALIDATE_URL ) ) {
+            $errors['frontend_url'][] = __( 'La URL del frontend no es válida.', 'webtowp-engine' );
+        }
+        
+        // Sanitizar scripts (permitir solo tags seguros)
+        $header_scripts = isset( $_POST['w2wp_header_scripts'] ) ? W2WP_Validator::sanitize_html( $_POST['w2wp_header_scripts'], array( 'script' => array( 'src' => array(), 'type' => array(), 'async' => array(), 'defer' => array() ) ) ) : '';
+        $footer_scripts = isset( $_POST['w2wp_footer_scripts'] ) ? W2WP_Validator::sanitize_html( $_POST['w2wp_footer_scripts'], array( 'script' => array( 'src' => array(), 'type' => array(), 'async' => array(), 'defer' => array() ) ) ) : '';
+
+        // Validar y sanitizar firma (solo para administradores)
+        if ( current_user_can( 'manage_options' ) ) {
+            $signature_text = isset( $_POST['w2wp_signature_text'] ) ? W2WP_Validator::sanitize_text( $_POST['w2wp_signature_text'] ) : 'Desarrollado por WebToWP';
+            $signature_url = isset( $_POST['w2wp_signature_url'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_signature_url'] ) : 'https://webtowp.com';
+        }
+
+        // Si hay errores críticos, mostrarlos
+        if ( ! empty( $errors ) ) {
+            // Filtrar solo errores críticos (no warnings de colores por defecto)
+            $critical_errors = array_filter( $errors, function( $field_errors, $field ) {
+                return ! in_array( $field, array( 'primary_color', 'secondary_color' ) );
+            }, ARRAY_FILTER_USE_BOTH );
+            
+            if ( ! empty( $critical_errors ) ) {
+                $notice_manager->add_validation_errors( $critical_errors );
+                wp_redirect( wp_get_referer() );
+                exit;
+            }
+        }
+
+        // Guardar todas las opciones
         update_option( 'w2wp_logo_principal', $logo_principal );
         update_option( 'w2wp_logo_contraste', $logo_contraste );
         update_option( 'w2wp_favicon', $favicon );
@@ -849,13 +1103,11 @@ class W2WP_Admin_Setup {
         update_option( 'w2wp_default_seo_image', $default_seo_image );
         
         if ( current_user_can( 'manage_options' ) ) {
-            $signature_text = isset( $_POST['w2wp_signature_text'] ) ? sanitize_text_field( $_POST['w2wp_signature_text'] ) : 'Desarrollado por WebToWP';
-            $signature_url = isset( $_POST['w2wp_signature_url'] ) ? esc_url_raw( $_POST['w2wp_signature_url'] ) : 'https://webtowp.com';
-            
             update_option( 'w2wp_signature_text', $signature_text );
             update_option( 'w2wp_signature_url', $signature_url );
         }
 
+        $notice_manager->add_success( __( 'Configuración global guardada correctamente.', 'webtowp-engine' ) );
         wp_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
         exit;
     }
@@ -986,14 +1238,46 @@ class W2WP_Admin_Setup {
             wp_die( __( 'No tienes permisos suficientes', 'webtowp-engine' ) );
         }
 
-        $webhook_url = isset( $_POST['w2wp_webhook_url'] ) ? esc_url_raw( $_POST['w2wp_webhook_url'] ) : '';
-        $allowed_origins = isset( $_POST['w2wp_allowed_origins'] ) ? sanitize_textarea_field( $_POST['w2wp_allowed_origins'] ) : '';
-        $api_key = isset( $_POST['w2wp_api_key'] ) ? sanitize_text_field( $_POST['w2wp_api_key'] ) : '';
+        $notice_manager = W2WP_Notice_Manager::get_instance();
+        $errors = array();
 
+        // Validar y sanitizar webhook URL
+        $webhook_url = isset( $_POST['w2wp_webhook_url'] ) ? W2WP_Validator::sanitize_url( $_POST['w2wp_webhook_url'] ) : '';
+        if ( ! empty( $webhook_url ) && ! filter_var( $webhook_url, FILTER_VALIDATE_URL ) ) {
+            $errors['webhook_url'][] = __( 'La URL del webhook no es válida.', 'webtowp-engine' );
+        }
+
+        // Validar y sanitizar allowed origins
+        $allowed_origins = isset( $_POST['w2wp_allowed_origins'] ) ? W2WP_Validator::sanitize_textarea( $_POST['w2wp_allowed_origins'] ) : '';
+        if ( ! empty( $allowed_origins ) ) {
+            $origins = explode( "\n", $allowed_origins );
+            foreach ( $origins as $origin ) {
+                $origin = trim( $origin );
+                if ( ! empty( $origin ) && ! filter_var( $origin, FILTER_VALIDATE_URL ) ) {
+                    $errors['allowed_origins'][] = sprintf( __( 'El origen "%s" no es una URL válida.', 'webtowp-engine' ), esc_html( $origin ) );
+                }
+            }
+        }
+
+        // Validar y sanitizar API key
+        $api_key = isset( $_POST['w2wp_api_key'] ) ? W2WP_Validator::sanitize_api_key( $_POST['w2wp_api_key'] ) : '';
+        if ( ! empty( $api_key ) && ! W2WP_Validator::is_valid_api_key( $api_key ) ) {
+            $errors['api_key'][] = __( 'La API Key debe tener al menos 16 caracteres alfanuméricos.', 'webtowp-engine' );
+        }
+
+        // Si hay errores, mostrarlos y no guardar
+        if ( ! empty( $errors ) ) {
+            $notice_manager->add_validation_errors( $errors );
+            wp_redirect( wp_get_referer() );
+            exit;
+        }
+
+        // Guardar opciones
         update_option( 'w2wp_webhook_url', $webhook_url );
         update_option( 'w2wp_allowed_origins', $allowed_origins );
         update_option( 'w2wp_api_key', $api_key );
 
+        $notice_manager->add_success( __( 'Configuración de deployment guardada correctamente.', 'webtowp-engine' ) );
         wp_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
         exit;
     }
@@ -1219,5 +1503,303 @@ class W2WP_Admin_Setup {
                 display: none !important;
             }
         </style>';
+    }
+
+    public function render_deployment_logs_page() {
+        $logger = W2WP_Deployment_Logger::get_instance();
+        
+        // Manejar acciones
+        if ( isset( $_GET['action'] ) && isset( $_GET['_wpnonce'] ) ) {
+            if ( $_GET['action'] === 'clear_logs' && wp_verify_nonce( $_GET['_wpnonce'], 'w2wp_clear_logs' ) ) {
+                $logger->clear_all_logs();
+                $notice_manager = W2WP_Notice_Manager::get_instance();
+                $notice_manager->add_success( __( 'Todos los logs han sido eliminados.', 'webtowp-engine' ) );
+                wp_redirect( admin_url( 'admin.php?page=webtowp-deployment-logs' ) );
+                exit;
+            }
+        }
+        
+        // Paginación
+        $page = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $per_page = 20;
+        $offset = ( $page - 1 ) * $per_page;
+        
+        // Filtros
+        $status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+        
+        $args = array(
+            'limit' => $per_page,
+            'offset' => $offset,
+        );
+        
+        if ( ! empty( $status_filter ) ) {
+            $args['status'] = $status_filter;
+        }
+        
+        $logs = $logger->get_logs( $args );
+        $total_logs = $logger->count_logs( $args );
+        $total_pages = ceil( $total_logs / $per_page );
+        
+        // Estadísticas
+        $stats = $logger->get_stats( 7 );
+        $last_deployment = $logger->get_last_deployment();
+        
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+            
+            <!-- Estadísticas -->
+            <div class="w2wp-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                <div class="w2wp-stat-card" style="background: #fff; padding: 20px; border-left: 4px solid #46b450; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #666;"><?php _e( 'Total (7 días)', 'webtowp-engine' ); ?></h3>
+                    <p style="margin: 0; font-size: 32px; font-weight: bold; color: #333;"><?php echo esc_html( $stats['total'] ); ?></p>
+                </div>
+                
+                <div class="w2wp-stat-card" style="background: #fff; padding: 20px; border-left: 4px solid #46b450; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #666;"><?php _e( 'Exitosos', 'webtowp-engine' ); ?></h3>
+                    <p style="margin: 0; font-size: 32px; font-weight: bold; color: #46b450;"><?php echo esc_html( $stats['success'] ); ?></p>
+                </div>
+                
+                <div class="w2wp-stat-card" style="background: #fff; padding: 20px; border-left: 4px solid #dc3232; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #666;"><?php _e( 'Errores', 'webtowp-engine' ); ?></h3>
+                    <p style="margin: 0; font-size: 32px; font-weight: bold; color: #dc3232;"><?php echo esc_html( $stats['errors'] ); ?></p>
+                </div>
+                
+                <div class="w2wp-stat-card" style="background: #fff; padding: 20px; border-left: 4px solid #0073aa; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #666;"><?php _e( 'Tasa de Éxito', 'webtowp-engine' ); ?></h3>
+                    <p style="margin: 0; font-size: 32px; font-weight: bold; color: #0073aa;"><?php echo esc_html( $stats['success_rate'] ); ?>%</p>
+                </div>
+            </div>
+            
+            <?php if ( $last_deployment ) : ?>
+            <div class="notice notice-info" style="margin: 20px 0;">
+                <p>
+                    <strong><?php _e( 'Último deployment:', 'webtowp-engine' ); ?></strong>
+                    <?php echo esc_html( $last_deployment->timestamp ); ?> -
+                    <span style="color: <?php echo $last_deployment->status === 'success' ? '#46b450' : '#dc3232'; ?>">
+                        <?php echo esc_html( ucfirst( $last_deployment->status ) ); ?>
+                    </span>
+                </p>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Filtros y acciones -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+                <form method="get" action="">
+                    <input type="hidden" name="page" value="webtowp-deployment-logs">
+                    <select name="status" onchange="this.form.submit()">
+                        <option value=""><?php _e( 'Todos los estados', 'webtowp-engine' ); ?></option>
+                        <option value="success" <?php selected( $status_filter, 'success' ); ?>><?php _e( 'Exitosos', 'webtowp-engine' ); ?></option>
+                        <option value="error" <?php selected( $status_filter, 'error' ); ?>><?php _e( 'Errores', 'webtowp-engine' ); ?></option>
+                    </select>
+                </form>
+                
+                <div>
+                    <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'action', 'clear_logs' ), 'w2wp_clear_logs' ) ); ?>" 
+                       class="button" 
+                       onclick="return confirm('<?php esc_attr_e( '¿Estás seguro de que quieres eliminar todos los logs?', 'webtowp-engine' ); ?>');">
+                        <?php _e( 'Limpiar Logs', 'webtowp-engine' ); ?>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Tabla de logs -->
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;"><?php _e( 'ID', 'webtowp-engine' ); ?></th>
+                        <th style="width: 150px;"><?php _e( 'Fecha', 'webtowp-engine' ); ?></th>
+                        <th><?php _e( 'Acción', 'webtowp-engine' ); ?></th>
+                        <th style="width: 100px;"><?php _e( 'Estado', 'webtowp-engine' ); ?></th>
+                        <th style="width: 80px;"><?php _e( 'Código', 'webtowp-engine' ); ?></th>
+                        <th><?php _e( 'Mensaje', 'webtowp-engine' ); ?></th>
+                        <th style="width: 100px;"><?php _e( 'Usuario', 'webtowp-engine' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ( ! empty( $logs ) ) : ?>
+                        <?php foreach ( $logs as $log ) : ?>
+                            <?php
+                            $user = get_userdata( $log->user_id );
+                            $user_name = $user ? $user->user_login : __( 'Desconocido', 'webtowp-engine' );
+                            $status_color = $log->status === 'success' ? '#46b450' : '#dc3232';
+                            ?>
+                            <tr>
+                                <td><?php echo esc_html( $log->id ); ?></td>
+                                <td><?php echo esc_html( $log->timestamp ); ?></td>
+                                <td><?php echo esc_html( $log->action ); ?></td>
+                                <td>
+                                    <span style="color: <?php echo esc_attr( $status_color ); ?>; font-weight: bold;">
+                                        <?php echo esc_html( ucfirst( $log->status ) ); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo esc_html( $log->response_code ); ?></td>
+                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $log->response_message ); ?>">
+                                    <?php echo esc_html( $log->response_message ); ?>
+                                </td>
+                                <td><?php echo esc_html( $user_name ); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;">
+                                <?php _e( 'No hay logs de deployment registrados.', 'webtowp-engine' ); ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+            
+            <!-- Paginación -->
+            <?php if ( $total_pages > 1 ) : ?>
+            <div class="tablenav bottom">
+                <div class="tablenav-pages">
+                    <?php
+                    echo paginate_links( array(
+                        'base' => add_query_arg( 'paged', '%#%' ),
+                        'format' => '',
+                        'prev_text' => __( '&laquo;' ),
+                        'next_text' => __( '&raquo;' ),
+                        'total' => $total_pages,
+                        'current' => $page,
+                    ) );
+                    ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public function render_backup_page() {
+        $backup_manager = W2WP_Backup_Manager::get_instance();
+        $auto_backups = $backup_manager->get_auto_backups();
+        
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <!-- Exportar Configuración -->
+                <div class="postbox" style="padding: 20px;">
+                    <h2 style="margin-top: 0;">📤 <?php _e( 'Exportar Configuración', 'webtowp-engine' ); ?></h2>
+                    <p><?php _e( 'Descarga un archivo JSON con toda la configuración del plugin.', 'webtowp-engine' ); ?></p>
+                    
+                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                        <?php wp_nonce_field( 'w2wp_export_settings' ); ?>
+                        <input type="hidden" name="action" value="w2wp_export_settings">
+                        
+                        <p>
+                            <button type="submit" class="button button-primary button-large">
+                                📥 <?php _e( 'Exportar Todo', 'webtowp-engine' ); ?>
+                            </button>
+                        </p>
+                    </form>
+                    
+                    <hr>
+                    
+                    <h3><?php _e( 'Exportaciones Parciales', 'webtowp-engine' ); ?></h3>
+                    <p style="font-size: 13px; color: #666;">
+                        <?php _e( 'Exporta solo partes específicas de la configuración.', 'webtowp-engine' ); ?>
+                    </p>
+                    
+                    <p>
+                        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'w2wp_export_modules' ) ), 'w2wp_export_modules' ) ); ?>" 
+                           class="button">
+                            <?php _e( 'Solo Módulos', 'webtowp-engine' ); ?>
+                        </a>
+                        
+                        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'w2wp_export_global' ) ), 'w2wp_export_global' ) ); ?>" 
+                           class="button">
+                            <?php _e( 'Solo Ajustes Globales', 'webtowp-engine' ); ?>
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Importar Configuración -->
+                <div class="postbox" style="padding: 20px;">
+                    <h2 style="margin-top: 0;">📥 <?php _e( 'Importar Configuración', 'webtowp-engine' ); ?></h2>
+                    <p><?php _e( 'Sube un archivo JSON para restaurar la configuración.', 'webtowp-engine' ); ?></p>
+                    
+                    <div class="notice notice-warning inline" style="margin: 15px 0;">
+                        <p>
+                            <strong>⚠️ <?php _e( 'Advertencia:', 'webtowp-engine' ); ?></strong>
+                            <?php _e( 'Esta acción sobrescribirá la configuración actual. Se recomienda hacer un backup antes.', 'webtowp-engine' ); ?>
+                        </p>
+                    </div>
+                    
+                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+                        <?php wp_nonce_field( 'w2wp_import_settings' ); ?>
+                        <input type="hidden" name="action" value="w2wp_import_settings">
+                        
+                        <p>
+                            <input type="file" name="import_file" accept=".json" required style="width: 100%;">
+                        </p>
+                        
+                        <p>
+                            <button type="submit" class="button button-primary button-large">
+                                📤 <?php _e( 'Importar Configuración', 'webtowp-engine' ); ?>
+                            </button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Backups Automáticos -->
+            <div class="postbox" style="padding: 20px; margin-top: 20px;">
+                <h2 style="margin-top: 0;">🔄 <?php _e( 'Backups Automáticos', 'webtowp-engine' ); ?></h2>
+                <p><?php _e( 'El sistema crea backups automáticos antes de actualizaciones importantes.', 'webtowp-engine' ); ?></p>
+                
+                <?php if ( ! empty( $auto_backups ) ) : ?>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th><?php _e( 'Archivo', 'webtowp-engine' ); ?></th>
+                                <th style="width: 150px;"><?php _e( 'Fecha', 'webtowp-engine' ); ?></th>
+                                <th style="width: 100px;"><?php _e( 'Tamaño', 'webtowp-engine' ); ?></th>
+                                <th style="width: 150px;"><?php _e( 'Acciones', 'webtowp-engine' ); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $auto_backups as $backup ) : ?>
+                                <tr>
+                                    <td><?php echo esc_html( $backup['filename'] ); ?></td>
+                                    <td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $backup['date'] ) ); ?></td>
+                                    <td><?php echo esc_html( size_format( $backup['size'] ) ); ?></td>
+                                    <td>
+                                        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'w2wp_download_backup', 'file' => $backup['filename'] ) ), 'w2wp_download_backup' ) ); ?>" 
+                                           class="button button-small">
+                                            <?php _e( 'Descargar', 'webtowp-engine' ); ?>
+                                        </a>
+                                        
+                                        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'w2wp_restore_backup', 'file' => $backup['filename'] ) ), 'w2wp_restore_backup' ) ); ?>" 
+                                           class="button button-small"
+                                           onclick="return confirm('<?php esc_attr_e( '¿Estás seguro de que quieres restaurar este backup?', 'webtowp-engine' ); ?>');">
+                                            <?php _e( 'Restaurar', 'webtowp-engine' ); ?>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else : ?>
+                    <p style="text-align: center; padding: 40px; color: #666;">
+                        <?php _e( 'No hay backups automáticos disponibles.', 'webtowp-engine' ); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Información -->
+            <div class="postbox" style="padding: 20px; margin-top: 20px; background: #f0f6fc; border-left: 4px solid #0073aa;">
+                <h3 style="margin-top: 0;">ℹ️ <?php _e( 'Información sobre Backups', 'webtowp-engine' ); ?></h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li><?php _e( 'Los backups incluyen toda la configuración del plugin excepto datos sensibles (API keys, webhooks).', 'webtowp-engine' ); ?></li>
+                    <li><?php _e( 'Los backups automáticos se crean antes de actualizaciones y se mantienen los últimos 10.', 'webtowp-engine' ); ?></li>
+                    <li><?php _e( 'Puedes exportar e importar configuraciones entre diferentes instalaciones de WordPress.', 'webtowp-engine' ); ?></li>
+                    <li><?php _e( 'Se recomienda hacer backups manuales antes de cambios importantes.', 'webtowp-engine' ); ?></li>
+                </ul>
+            </div>
+        </div>
+        <?php
     }
 }

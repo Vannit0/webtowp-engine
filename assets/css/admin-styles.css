@@ -1,0 +1,584 @@
+/**
+ * WebToWP Engine - Admin Styles
+ * Modern UI/UX improvements for admin panel
+ */
+
+/* ============================================
+   Variables CSS
+   ============================================ */
+:root {
+    --w2wp-primary: #667eea;
+    --w2wp-secondary: #764ba2;
+    --w2wp-success: #46b450;
+    --w2wp-warning: #ffb900;
+    --w2wp-error: #dc3232;
+    --w2wp-info: #0073aa;
+    --w2wp-dark: #1e293b;
+    --w2wp-light: #f8fafc;
+    --w2wp-border: #e2e8f0;
+    --w2wp-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --w2wp-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --w2wp-radius: 8px;
+    --w2wp-transition: all 0.3s ease;
+}
+
+/* ============================================
+   Layout General
+   ============================================ */
+.webtowp-admin-page {
+    background: var(--w2wp-light);
+    padding: 20px;
+    margin: 0 -20px -20px;
+}
+
+.webtowp-admin-page .wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.webtowp-header {
+    background: linear-gradient(135deg, var(--w2wp-primary) 0%, var(--w2wp-secondary) 100%);
+    color: white;
+    padding: 30px;
+    border-radius: var(--w2wp-radius);
+    margin-bottom: 30px;
+    box-shadow: var(--w2wp-shadow-lg);
+}
+
+.webtowp-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+}
+
+.webtowp-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 16px;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+.webtowp-card {
+    background: white;
+    border-radius: var(--w2wp-radius);
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--w2wp-shadow);
+    transition: var(--w2wp-transition);
+}
+
+.webtowp-card:hover {
+    box-shadow: var(--w2wp-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.webtowp-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--w2wp-border);
+}
+
+.webtowp-card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--w2wp-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.webtowp-card-icon {
+    font-size: 24px;
+}
+
+.webtowp-card-body {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Grid System
+   ============================================ */
+.webtowp-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.webtowp-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.webtowp-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.webtowp-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ============================================
+   Stats Cards
+   ============================================ */
+.webtowp-stat-card {
+    background: white;
+    border-radius: var(--w2wp-radius);
+    padding: 25px;
+    box-shadow: var(--w2wp-shadow);
+    transition: var(--w2wp-transition);
+    border-left: 4px solid var(--w2wp-primary);
+}
+
+.webtowp-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--w2wp-shadow-lg);
+}
+
+.webtowp-stat-card.success {
+    border-left-color: var(--w2wp-success);
+}
+
+.webtowp-stat-card.warning {
+    border-left-color: var(--w2wp-warning);
+}
+
+.webtowp-stat-card.error {
+    border-left-color: var(--w2wp-error);
+}
+
+.webtowp-stat-card.info {
+    border-left-color: var(--w2wp-info);
+}
+
+.webtowp-stat-label {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 10px 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.webtowp-stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--w2wp-dark);
+    margin: 0;
+    line-height: 1;
+}
+
+.webtowp-stat-change {
+    font-size: 13px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.webtowp-stat-change.positive {
+    color: var(--w2wp-success);
+}
+
+.webtowp-stat-change.negative {
+    color: var(--w2wp-error);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.webtowp-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--w2wp-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--w2wp-transition);
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.webtowp-button-primary {
+    background: linear-gradient(135deg, var(--w2wp-primary) 0%, var(--w2wp-secondary) 100%);
+    color: white;
+}
+
+.webtowp-button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.webtowp-button-secondary {
+    background: white;
+    color: var(--w2wp-primary);
+    border: 2px solid var(--w2wp-primary);
+}
+
+.webtowp-button-secondary:hover {
+    background: var(--w2wp-primary);
+    color: white;
+}
+
+.webtowp-button-success {
+    background: var(--w2wp-success);
+    color: white;
+}
+
+.webtowp-button-danger {
+    background: var(--w2wp-error);
+    color: white;
+}
+
+/* ============================================
+   Badges
+   ============================================ */
+.webtowp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.webtowp-badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.webtowp-badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.webtowp-badge-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.webtowp-badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* ============================================
+   Alerts
+   ============================================ */
+.webtowp-alert {
+    padding: 16px 20px;
+    border-radius: var(--w2wp-radius);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border-left: 4px solid;
+}
+
+.webtowp-alert-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.webtowp-alert-content {
+    flex: 1;
+}
+
+.webtowp-alert-title {
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.webtowp-alert-message {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.webtowp-alert-success {
+    background: #dcfce7;
+    border-left-color: var(--w2wp-success);
+    color: #166534;
+}
+
+.webtowp-alert-warning {
+    background: #fef3c7;
+    border-left-color: var(--w2wp-warning);
+    color: #92400e;
+}
+
+.webtowp-alert-error {
+    background: #fee2e2;
+    border-left-color: var(--w2wp-error);
+    color: #991b1b;
+}
+
+.webtowp-alert-info {
+    background: #dbeafe;
+    border-left-color: var(--w2wp-info);
+    color: #1e40af;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+.webtowp-progress {
+    width: 100%;
+    height: 8px;
+    background: var(--w2wp-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.webtowp-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--w2wp-primary) 0%, var(--w2wp-secondary) 100%);
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+.webtowp-table {
+    width: 100%;
+    background: white;
+    border-radius: var(--w2wp-radius);
+    overflow: hidden;
+    box-shadow: var(--w2wp-shadow);
+}
+
+.webtowp-table thead {
+    background: var(--w2wp-light);
+}
+
+.webtowp-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--w2wp-dark);
+    border-bottom: 2px solid var(--w2wp-border);
+}
+
+.webtowp-table td {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--w2wp-border);
+}
+
+.webtowp-table tbody tr:hover {
+    background: var(--w2wp-light);
+}
+
+.webtowp-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================
+   Forms
+   ============================================ */
+.webtowp-form-group {
+    margin-bottom: 20px;
+}
+
+.webtowp-form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--w2wp-dark);
+}
+
+.webtowp-form-input,
+.webtowp-form-select,
+.webtowp-form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--w2wp-border);
+    border-radius: var(--w2wp-radius);
+    font-size: 14px;
+    transition: var(--w2wp-transition);
+}
+
+.webtowp-form-input:focus,
+.webtowp-form-select:focus,
+.webtowp-form-textarea:focus {
+    outline: none;
+    border-color: var(--w2wp-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.webtowp-form-help {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 5px;
+}
+
+/* ============================================
+   Toggle Switch
+   ============================================ */
+.webtowp-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.webtowp-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.webtowp-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.4s;
+    border-radius: 26px;
+}
+
+.webtowp-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+.webtowp-toggle input:checked + .webtowp-toggle-slider {
+    background: linear-gradient(135deg, var(--w2wp-primary) 0%, var(--w2wp-secondary) 100%);
+}
+
+.webtowp-toggle input:checked + .webtowp-toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+.webtowp-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(102, 126, 234, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--w2wp-primary);
+    animation: webtowp-spin 0.8s linear infinite;
+}
+
+@keyframes webtowp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Tooltips
+   ============================================ */
+.webtowp-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.webtowp-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: var(--w2wp-dark);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: var(--w2wp-shadow-lg);
+}
+
+.webtowp-tooltip:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--w2wp-dark);
+    z-index: 1000;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes webtowp-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.webtowp-fade-in {
+    animation: webtowp-fadeIn 0.3s ease-out;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .webtowp-grid-2,
+    .webtowp-grid-3,
+    .webtowp-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .webtowp-header h1 {
+        font-size: 24px;
+    }
+    
+    .webtowp-stat-value {
+        font-size: 28px;
+    }
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --w2wp-dark: #f8fafc;
+        --w2wp-light: #1e293b;
+        --w2wp-border: #334155;
+    }
+    
+    .webtowp-card,
+    .webtowp-stat-card,
+    .webtowp-table {
+        background: #1e293b;
+        color: #f8fafc;
+    }
+}

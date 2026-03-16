@@ -1,0 +1,184 @@
+# Spanish (Spain) translation for WebToWP Engine
+# Copyright (C) 2024 WebToWP Engine
+# This file is distributed under the same license as the WebToWP Engine package.
+msgid ""
+msgstr ""
+"Project-Id-Version: WebToWP Engine 1.2.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Vannit0/webtowp-engine/issues\n"
+"POT-Creation-Date: 2024-01-01 00:00:00+00:00\n"
+"PO-Revision-Date: 2024-01-01 00:00:00+00:00\n"
+"Last-Translator: WebToWP Team <info@webtowp.com>\n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "WebToWP Engine"
+msgstr "WebToWP Engine"
+
+msgid "Módulos Activos"
+msgstr "Módulos Activos"
+
+msgid "Ajustes Globales"
+msgstr "Ajustes Globales"
+
+msgid "Despliegue & API"
+msgstr "Despliegue & API"
+
+msgid "Estado del Sistema"
+msgstr "Estado del Sistema"
+
+msgid "Logs de Deployment"
+msgstr "Registros de Despliegue"
+
+msgid "WebToWP Engine requiere Advanced Custom Fields (ACF) para funcionar."
+msgstr "WebToWP Engine requiere Advanced Custom Fields (ACF) para funcionar."
+
+msgid "Por favor, instala y activa Advanced Custom Fields."
+msgstr "Por favor, instala y activa Advanced Custom Fields."
+
+msgid "WebToWP Engine requiere PHP %s o superior."
+msgstr "WebToWP Engine requiere PHP %s o superior."
+
+msgid "Tu versión actual es %s. Por favor, actualiza PHP."
+msgstr "Tu versión actual es %s. Por favor, actualiza PHP."
+
+msgid "WebToWP Engine requiere WordPress %s o superior."
+msgstr "WebToWP Engine requiere WordPress %s o superior."
+
+msgid "Tu versión actual es %s. Por favor, actualiza WordPress."
+msgstr "Tu versión actual es %s. Por favor, actualiza WordPress."
+
+msgid "Error de validación"
+msgstr "Error de validación"
+
+msgid "Configuración guardada correctamente."
+msgstr "Configuración guardada correctamente."
+
+msgid "Error al guardar la configuración."
+msgstr "Error al guardar la configuración."
+
+msgid "Módulo activado correctamente."
+msgstr "Módulo activado correctamente."
+
+msgid "Módulo desactivado correctamente."
+msgstr "Módulo desactivado correctamente."
+
+msgid "Caché limpiada correctamente."
+msgstr "Caché limpiada correctamente."
+
+msgid "Error al limpiar la caché."
+msgstr "Error al limpiar la caché."
+
+msgid "Limpiar Caché"
+msgstr "Limpiar Caché"
+
+msgid "Total (7 días)"
+msgstr "Total (7 días)"
+
+msgid "Exitosos"
+msgstr "Exitosos"
+
+msgid "Errores"
+msgstr "Errores"
+
+msgid "Tasa de Éxito"
+msgstr "Tasa de Éxito"
+
+msgid "Último deployment:"
+msgstr "Último despliegue:"
+
+msgid "Todos los estados"
+msgstr "Todos los estados"
+
+msgid "Limpiar Logs"
+msgstr "Limpiar Registros"
+
+msgid "¿Estás seguro de que quieres eliminar todos los logs?"
+msgstr "¿Estás seguro de que quieres eliminar todos los registros?"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Fecha"
+msgstr "Fecha"
+
+msgid "Acción"
+msgstr "Acción"
+
+msgid "Estado"
+msgstr "Estado"
+
+msgid "Código"
+msgstr "Código"
+
+msgid "Mensaje"
+msgstr "Mensaje"
+
+msgid "Usuario"
+msgstr "Usuario"
+
+msgid "Desconocido"
+msgstr "Desconocido"
+
+msgid "No hay logs de deployment registrados."
+msgstr "No hay registros de despliegue."
+
+msgid "Todos los logs han sido eliminados."
+msgstr "Todos los registros han sido eliminados."
+
+msgid "URL inválida"
+msgstr "URL inválida"
+
+msgid "Email inválido"
+msgstr "Email inválido"
+
+msgid "Color hexadecimal inválido"
+msgstr "Color hexadecimal inválido"
+
+msgid "Número de teléfono inválido"
+msgstr "Número de teléfono inválido"
+
+msgid "Clave API inválida"
+msgstr "Clave API inválida"
+
+msgid "Slug inválido"
+msgstr "Slug inválido"
+
+msgid "Número inválido"
+msgstr "Número inválido"
+
+msgid "Fecha inválida"
+msgstr "Fecha inválida"
+
+msgid "ID de adjunto inválido"
+msgstr "ID de adjunto inválido"
+
+msgid "JSON inválido"
+msgstr "JSON inválido"
+
+msgid "El campo %s es requerido"
+msgstr "El campo %s es requerido"
+
+msgid "Clave de API inválida."
+msgstr "Clave de API inválida."
+
+msgid "No tienes permisos para realizar esta acción."
+msgstr "No tienes permisos para realizar esta acción."
+
+msgid "Configura la URL de Cloudflare en los ajustes (WebToWP > Despliegue & API)"
+msgstr "Configura la URL de Cloudflare en los ajustes (WebToWP > Despliegue & API)"
+
+msgid "Error al conectar con el webhook: %s"
+msgstr "Error al conectar con el webhook: %s"
+
+msgid "¡Despliegue enviado exitosamente! Tu sitio se actualizará en breve."
+msgstr "¡Despliegue enviado exitosamente! Tu sitio se actualizará en breve."
+
+msgid "El webhook respondió con código %d. Verifica la configuración."
+msgstr "El webhook respondió con código %d. Verifica la configuración."
+
+msgid "Disparar Despliegue"
+msgstr "Disparar Despliegue"

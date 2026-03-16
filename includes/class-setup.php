@@ -6,9 +6,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 class W2WP_Setup {
 
     public static function activate_plugin() {
+        // Verificar dependencias antes de activar
+        require_once W2WP_INCLUDES_PATH . 'class-dependency-checker.php';
+        $dependency_checker = W2WP_Dependency_Checker::get_instance();
+        $dependency_checker->check_dependencies();
+        
+        // Si las dependencias no están satisfechas, desactivar el plugin
+        if ( ! $dependency_checker->are_dependencies_met() ) {
+            $dependency_checker->deactivate_if_dependencies_missing();
+            return;
+        }
+
         self::create_initial_pages();
         self::set_default_branding();
         self::create_deployment_log_table();
+        
+        // Marcar que el plugin se activó correctamente
+        update_option( 'w2wp_activation_timestamp', current_time( 'timestamp' ) );
+        update_option( 'w2wp_version', W2WP_VERSION );
     }
 
     public static function set_default_branding() {
@@ -30,10 +45,13 @@ class W2WP_Setup {
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             timestamp datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             action varchar(100) NOT NULL,
+            status varchar(20) DEFAULT 'success' NOT NULL,
             response_code int(3) DEFAULT NULL,
             response_message text DEFAULT NULL,
             user_id bigint(20) DEFAULT NULL,
-            PRIMARY KEY  (id)
+            PRIMARY KEY  (id),
+            KEY status (status),
+            KEY timestamp (timestamp)
         ) $charset_collate;";
 
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );

@@ -38,9 +38,11 @@ class W2WP_Module_Landing {
         if ( $is_active === '1' && ! $was_active ) {
             $this->blueprint_landing_page();
             update_option( 'w2wp_mod_landing_activated', true );
-            flush_rewrite_rules();
+            // Marcar que se necesita flush en el próximo request
+            set_transient( 'w2wp_flush_rewrite_rules', 1, 60 );
         } elseif ( $is_active === '0' && $was_active ) {
             update_option( 'w2wp_mod_landing_activated', false );
+            set_transient( 'w2wp_flush_rewrite_rules', 1, 60 );
         }
     }
 
@@ -57,7 +59,8 @@ class W2WP_Module_Landing {
             ) );
         }
 
-        flush_rewrite_rules();
+        // Marcar que se necesita flush en el próximo request
+        set_transient( 'w2wp_flush_rewrite_rules', 1, 60 );
     }
 
     public function register_module_fields() {

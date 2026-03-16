@@ -76,6 +76,14 @@ class W2WP_API_Config {
     }
 
     public function get_site_info( $request ) {
+        $cache = W2WP_Cache_Manager::get_instance();
+        
+        // Intentar obtener del caché
+        $cached = $cache->get_cached_site_info();
+        if ( false !== $cached ) {
+            return rest_ensure_response( $cached );
+        }
+        
         $site_logo_id = get_theme_mod( 'custom_logo' );
         $site_logo_url = '';
         
@@ -98,11 +106,22 @@ class W2WP_API_Config {
             ),
             'timestamp' => current_time( 'mysql' ),
         );
+        
+        // Guardar en caché por 1 hora
+        $cache->cache_site_info( $response, 3600 );
 
         return rest_ensure_response( $response );
     }
 
     public function get_global_settings( $request ) {
+        $cache = W2WP_Cache_Manager::get_instance();
+        
+        // Intentar obtener del caché
+        $cached = $cache->get_cached_global_settings();
+        if ( false !== $cached ) {
+            return rest_ensure_response( $cached );
+        }
+        
         $logo_principal = get_option( 'w2wp_logo_principal', '' );
         $logo_contraste = get_option( 'w2wp_logo_contraste', '' );
         $favicon = get_option( 'w2wp_favicon', '' );
@@ -181,6 +200,9 @@ class W2WP_API_Config {
             ),
             'timestamp' => current_time( 'mysql' ),
         );
+        
+        // Guardar en caché por 1 hora
+        $cache->cache_global_settings( $response, 3600 );
 
         return rest_ensure_response( $response );
     }
