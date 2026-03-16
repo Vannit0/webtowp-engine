@@ -41,6 +41,26 @@ class W2WP_API_Config {
             'callback'            => array( $this, 'get_debug_info' ),
             'permission_callback' => array( $this, 'validate_api_key' ),
         ) );
+
+        register_rest_route( 'webtowp/v1', '/pages/(?P<slug>[a-zA-Z0-9-]+)', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'get_page_by_slug' ),
+            'permission_callback' => array( $this, 'validate_api_key' ),
+            'args'                => array(
+                'slug' => array(
+                    'required'          => true,
+                    'validate_callback' => function( $param ) {
+                        return is_string( $param );
+                    },
+                ),
+            ),
+        ) );
+
+        register_rest_route( 'webtowp/v1', '/servicios', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'get_servicios' ),
+            'permission_callback' => array( $this, 'validate_api_key' ),
+        ) );
     }
 
     public function validate_api_key( $request ) {
@@ -280,6 +300,100 @@ class W2WP_API_Config {
             'timestamp' => current_time( 'mysql' ),
         );
 
+        return rest_ensure_response( $response );
+    }
+
+    public function get_page_by_slug( $request ) {
+        $slug = $request->get_param( 'slug' );
+        
+        $args = array(
+            'name'        => $slug,
+            'post_type'   => 'page',
+            'post_status' => 'publish',
+            'numberposts' => 1,
+        );
+        
+        $pages = get_posts( $args );
+        
+        if ( empty( $pages ) ) {
+            return new WP_Error(
+                'page_not_found',
+                __( 'Página no encontrada.', 'webtowp-engine' ),
+                array( 'status' => 404 )
+            );
+        }
+        
+        $page = $pages[0];
+        $post_id = $page->ID;
+        
+        // Obtener todos los campos de ACF
+        $acf_fields = array();
+        if ( function_exists( 'get_fields' ) ) {
+            $fields = get_fields( $post_id );
+            if ( is_array( $fields ) ) {
+                $acf_fields = $fields;
+            }
+        }
+        
+        $response = array(
+            'success' => true,
+            'data'    => array(
+                'id'      => $post_id,
+                'title'   => get_the_title( $post_id ),
+                'slug'    => $page->post_name,
+                'content' => apply_filters( 'the_content', $page->post_content ),
+                'excerpt' => get_the_excerpt( $post_id ),
+                'fields'  => $acf_fields,
+            ),
+        );
+        
+        return rest_ensure_response( $response );
+    }
+
+    public function get_servicios( $request ) {
+        $args = array(
+            'post_type'      => 'w2wp_servicios',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
+        );
+        
+        $servicios = get_posts( $args );
+        $data = array();
+        
+        foreach ( $servicios as $servicio ) {
+            $post_id = $servicio->ID;
+            
+            // Obtener campos de ACF específicos
+            $icono = '';
+            $resumen = '';
+            $destacado = false;
+            
+            if ( function_exists( 'get_field' ) ) {
+                $icono = get_field( 'icono', $post_id ) ?: '';
+                $resumen = get_field( 'resumen', $post_id ) ?: '';
+                $destacado = get_field( 'destacado', $post_id ) ?: false;
+            }
+            
+            $data[] = array(
+                'id'        => $post_id,
+                'title'     => get_the_title( $post_id ),
+                'slug'      => $servicio->post_name,
+                'content'   => apply_filters( 'the_content', $servicio->post_content ),
+                'excerpt'   => get_the_excerpt( $post_id ),
+                'icono'     => $icono,
+                'resumen'   => $resumen,
+                'destacado' => $destacado,
+            );
+        }
+        
+        $response = array(
+            'success' => true,
+            'data'    => $data,
+            'count'   => count( $data ),
+        );
+        
         return rest_ensure_response( $response );
     }
 }

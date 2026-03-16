@@ -136,20 +136,34 @@ class W2WP_Module_Informativo {
             ),
         );
 
-        foreach ( $pages as $page_data ) {
+        foreach ( $pages as $key => $page_data ) {
             $is_page_active = get_option( $page_data['option'], '0' );
             
             if ( $is_page_active === '1' ) {
                 $existing_page = get_page_by_path( $page_data['slug'] );
                 
                 if ( ! $existing_page ) {
-                    wp_insert_post( array(
+                    $page_id = wp_insert_post( array(
                         'post_title' => $page_data['title'],
                         'post_name' => $page_data['slug'],
                         'post_status' => 'publish',
                         'post_type' => 'page',
                         'post_content' => '',
                     ) );
+                    
+                    // Si es la página de inicio, configurarla como front page
+                    if ( $key === 'inicio' && $page_id && ! is_wp_error( $page_id ) ) {
+                        update_option( 'show_on_front', 'page' );
+                        update_option( 'page_on_front', $page_id );
+                        error_log( '[WebToWP Module Informativo] Página de inicio configurada como front page (ID: ' . $page_id . ')' );
+                    }
+                } else {
+                    // Si la página ya existe y es inicio, asegurar que esté configurada como front page
+                    if ( $key === 'inicio' ) {
+                        update_option( 'show_on_front', 'page' );
+                        update_option( 'page_on_front', $existing_page->ID );
+                        error_log( '[WebToWP Module Informativo] Página de inicio existente configurada como front page (ID: ' . $existing_page->ID . ')' );
+                    }
                 }
             }
         }
@@ -335,9 +349,19 @@ class W2WP_Module_Informativo {
             'location' => array(
                 array(
                     array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'page',
+                    ),
+                    array(
+                        'param' => 'page_template',
+                        'operator' => '==',
+                        'value' => 'default',
+                    ),
+                    array(
                         'param' => 'page',
                         'operator' => '==',
-                        'value' => $this->get_page_id_by_slug( 'sobre-nosotros' ),
+                        'value' => get_page_by_path( 'sobre-nosotros' ) ? get_page_by_path( 'sobre-nosotros' )->ID : 0,
                     ),
                 ),
             ),
@@ -392,9 +416,14 @@ class W2WP_Module_Informativo {
             'location' => array(
                 array(
                     array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'page',
+                    ),
+                    array(
                         'param' => 'page',
                         'operator' => '==',
-                        'value' => $this->get_page_id_by_slug( 'contacto' ),
+                        'value' => get_page_by_path( 'contacto' ) ? get_page_by_path( 'contacto' )->ID : 0,
                     ),
                 ),
             ),
@@ -442,9 +471,14 @@ class W2WP_Module_Informativo {
             'location' => array(
                 array(
                     array(
+                        'param' => 'post_type',
+                        'operator' => '==',
+                        'value' => 'page',
+                    ),
+                    array(
                         'param' => 'page',
                         'operator' => '==',
-                        'value' => $this->get_page_id_by_slug( 'faq' ),
+                        'value' => get_page_by_path( 'faq' ) ? get_page_by_path( 'faq' )->ID : 0,
                     ),
                 ),
             ),
