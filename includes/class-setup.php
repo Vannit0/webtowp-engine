@@ -76,7 +76,15 @@ class W2WP_Setup {
         $existing_pages = array();
 
         foreach ( $pages as $page_title ) {
-            $slug = strtolower( $page_title );
+            // Sanitizar el título y crear slug válido
+            if ( empty( $page_title ) || ! is_string( $page_title ) ) {
+                continue;
+            }
+            
+            $slug = sanitize_title( $page_title );
+            if ( empty( $slug ) ) {
+                $slug = strtolower( str_replace( ' ', '-', $page_title ) );
+            }
             
             $page_exists = get_page_by_path( $slug );
             
@@ -133,24 +141,31 @@ class W2WP_Setup {
         // Verificar y actualizar tabla de deployment logs si es necesario
         $table_name = $wpdb->prefix . 'w2wp_deployment_logs';
         
-        // Verificar si la columna status existe
-        $column_exists = $wpdb->get_results( 
-            $wpdb->prepare( 
-                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'status'",
-                DB_NAME,
-                $table_name
-            )
-        );
+        // Verificar si la tabla existe primero
+        $table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" );
+        if ( ! $table_exists ) {
+            error_log( '[WebToWP Engine] Tabla de deployment logs no existe, se creará en create_deployment_log_table()' );
+            update_option( 'w2wp_db_version', W2WP_VERSION );
+            return;
+        }
         
-        if ( empty( $column_exists ) ) {
+        // Verificar si la columna status existe usando SHOW COLUMNS (más compatible)
+        $columns = $wpdb->get_results( "SHOW COLUMNS FROM {$table_name} LIKE 'status'" );
+        $column_exists = ! empty( $columns );
+        
+        if ( ! $column_exists ) {
             // Agregar columna status si no existe
-            $wpdb->query( 
+            $result = $wpdb->query( 
                 "ALTER TABLE {$table_name} 
                 ADD COLUMN status varchar(20) DEFAULT 'success' NOT NULL AFTER action,
                 ADD KEY status (status)"
             );
-            error_log( '[WebToWP Engine] Columna status agregada a la tabla de deployment logs.' );
+            
+            if ( false !== $result ) {
+                error_log( '[WebToWP Engine] Columna status agregada a la tabla de deployment logs.' );
+            } else {
+                error_log( '[WebToWP Engine] Error al agregar columna status: ' . $wpdb->last_error );
+            }
         }
         
         // Actualizar versión de la base de datos
