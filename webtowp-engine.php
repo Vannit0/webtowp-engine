@@ -34,25 +34,30 @@ function webtowp_engine() {
 
 register_activation_hook( __FILE__, array( 'W2WP_Setup', 'activate_plugin' ) );
 
-$update_checker_path = W2WP_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
-if ( file_exists( $update_checker_path ) ) {
-    require_once $update_checker_path;
-    
-    if ( class_exists( 'YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
-        $myUpdateChecker = PucFactory::buildUpdateChecker(
-            'https://github.com/Vannit0/webtowp-engine',
-            __FILE__,
-            'webtowp-engine'
-        );
+/**
+ * Inicializar Plugin Update Checker después de que WordPress esté completamente cargado
+ */
+add_action( 'plugins_loaded', function() {
+    $update_checker_path = W2WP_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
+    if ( file_exists( $update_checker_path ) ) {
+        require_once $update_checker_path;
         
-        $myUpdateChecker->setBranch( 'main' );
-        
-        if ( defined( 'W2WP_GITHUB_TOKEN' ) && W2WP_GITHUB_TOKEN ) {
-            $myUpdateChecker->setAuthentication( W2WP_GITHUB_TOKEN );
+        if ( class_exists( 'YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
+            $myUpdateChecker = PucFactory::buildUpdateChecker(
+                'https://github.com/Vannit0/webtowp-engine',
+                __FILE__,
+                'webtowp-engine'
+            );
+            
+            $myUpdateChecker->setBranch( 'main' );
+            
+            if ( defined( 'W2WP_GITHUB_TOKEN' ) && W2WP_GITHUB_TOKEN ) {
+                $myUpdateChecker->setAuthentication( W2WP_GITHUB_TOKEN );
+            }
+            
+            $myUpdateChecker->getVcsApi()->enableReleaseAssets();
         }
-        
-        $myUpdateChecker->getVcsApi()->enableReleaseAssets();
     }
-}
+}, 5 );
 
 webtowp_engine();
